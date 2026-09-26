@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Asris: sıraları kaydır, noktaları temizle. Satranç gibi öğrenilen bir mantık bulmacası.">
+<meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EEF2F8" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Asris">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Asris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Asris — görsel dil: minimal laboratuvar */
+:root {
+  --bg: #EEF2F8; --surface: #FFFFFF; --surface2: #E4EAF3; --line: #CBD5E3; --text: #0F1A30; --muted: #5B6B86;
+  --blue: #1F6FE0; --blue-soft: rgba(31,111,224,.16); --red: #D9481C; --red-soft: rgba(217,72,28,.16); --gold: #B8860B; --gold-soft: rgba(184,134,11,.18);
+  --accent: #1F6FE0; --accent-text: #FFFFFF; --cell: #F7F9FC; --cell-empty: #EEF2F8; --handle: #DDE5F0; --grip: #8E9DB5; --shadow: 0 12px 30px rgba(15,26,48,.18);
+  --good: #1B8A5A; --warn: #B8860B; --danger: #C43D2D; --radius: 14px;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0B1220; --surface: #121B2E; --surface2: #182338; --line: #263350; --text: #E6ECF7; --muted: #8E9DB8; --blue: #4FA3FF; --blue-soft: rgba(79,163,255,.18); --red: #FF7A45; --red-soft: rgba(255,122,69,.18); --gold: #D4AF37; --gold-soft: rgba(212,175,55,.2); --accent: #4FA3FF; --accent-text: #061024; --cell: #172238; --cell-empty: #121B2E; --handle: #1D2A44; --grip: #5C6E92; --shadow: 0 14px 34px rgba(0,0,0,.5); --good: #3DD68C; --warn: #E2B93B; --danger: #FF6B5B; color-scheme: dark; } }
+:root[data-theme="dark"], #app[data-theme="dark"] { --bg: #0B1220; --surface: #121B2E; --surface2: #182338; --line: #263350; --text: #E6ECF7; --muted: #8E9DB8; --blue: #4FA3FF; --blue-soft: rgba(79,163,255,.18); --red: #FF7A45; --red-soft: rgba(255,122,69,.18); --gold: #D4AF37; --gold-soft: rgba(212,175,55,.2); --accent: #4FA3FF; --accent-text: #061024; --cell: #172238; --cell-empty: #121B2E; --handle: #1D2A44; --grip: #5C6E92; --shadow: 0 14px 34px rgba(0,0,0,.5); --good: #3DD68C; --warn: #E2B93B; --danger: #FF6B5B; color-scheme: dark; }
+#app[data-theme="light"] { --bg: #EEF2F8; --surface: #FFFFFF; --surface2: #E4EAF3; --line: #CBD5E3; --text: #0F1A30; --muted: #5B6B86; --blue: #1F6FE0; --blue-soft: rgba(31,111,224,.16); --red: #D9481C; --red-soft: rgba(217,72,28,.16); --gold: #B8860B; --gold-soft: rgba(184,134,11,.18); --accent: #1F6FE0; --accent-text: #FFFFFF; --cell: #F7F9FC; --cell-empty: #EEF2F8; --handle: #DDE5F0; --grip: #8E9DB5; --shadow: 0 12px 30px rgba(15,26,48,.18); --good: #1B8A5A; --warn: #B8860B; --danger: #C43D2D; color-scheme: light; }
+
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; overscroll-behavior-y: contain; }
+#app { min-height: 100%; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+.screen { flex: 1; display: flex; flex-direction: column; width: 100%; max-width: 640px; margin: 0 auto; padding-inline: 16px; box-sizing: border-box; padding-block: 0 24px; }
+.screen[hidden] { display: none; }
+button { font: inherit; color: inherit; }
+.btn { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 12px 18px; cursor: pointer; font-weight: 600; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform .08s ease, background .15s ease; min-height: 48px; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.btn.danger { color: var(--danger); }
+.btn.big { padding: 16px 22px; font-size: 18px; width: 100%; }
+.btn small { font-weight: 400; font-size: 13px; opacity: .85; }
+.btn .ico { width: 18px; height: 18px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.note { color: var(--muted); font-size: 14px; }
+.ico { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* üst çubuk */
+.bar { display: flex; align-items: center; gap: 10px; padding-block: 10px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; min-height: 56px; }
+.bar-title { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.bar-title b { font-size: 17px; } .bar-title small { color: var(--muted); font-size: 12.5px; }
+.bar-spacer { flex: 1; }
+.bar-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.bar-title small { white-space: nowrap; }
+.icon-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+.goal { width: 48px; flex: none; }
+.goal .mini { width: 48px; height: 48px; }
+.stars .star { color: var(--line); font-size: 15px; transition: color .2s, transform .2s; }
+.stars .star.on { color: var(--gold); }
+.star.pop { animation: starpop .45s ease; }
+@keyframes starpop { 0% { transform: scale(.4); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* ana ekran */
+.home { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-block: 24px; }
+.logo-svg { width: min(280px, 70vw); height: auto; display: block; margin: 0 auto; }
+.logo-cells rect { fill: var(--cell); stroke: var(--line); }
+.logo-cells .lb { fill: var(--blue); } .logo-cells .lr { fill: none; stroke: var(--red); stroke-width: 3; }
+.logo-text { font-family: var(--sans); font-weight: 700; font-size: 44px; fill: var(--text); letter-spacing: -.5px; }
+.tagline { text-align: center; color: var(--muted); margin: 0; }
+.home-actions { display: flex; flex-direction: column; gap: 12px; }
+.row-btns { display: flex; gap: 10px; } .row-btns .btn { flex: 1; }
+.home-stars { text-align: center; color: var(--muted); margin: 0; font-size: 14px; }
+
+/* harita */
+.map { display: flex; flex-direction: column; gap: 22px; padding-block: 8px; }
+.phase h2 { font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.lvl { position: relative; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px 8px 8px; min-height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+.lvl.locked { opacity: .45; cursor: default; }
+.lvl.open { border-color: var(--accent); box-shadow: 0 0 0 3px var(--blue-soft); }
+.lvl.done { background: var(--surface2); }
+.lvl-no { font-weight: 700; font-size: 20px; }
+.lvl-stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; min-height: 16px; }
+.lvl-size { color: var(--muted); font-size: 11.5px; }
+.lvl-mark { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--accent-text); font-size: 10.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; font-weight: 600; }
+.watched { font-size: 13px; }
+
+/* oyun ekranı */
+#screen-play { padding-block: 0 0; }
+.play-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-block: 8px 12px; }
+#board-wrap { width: 100%; max-width: 600px; }
+.board { width: 100%; height: auto; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; overflow: visible; }
+.board.static .row { cursor: default; }
+.row { cursor: grab; }
+.row.dragging { cursor: grabbing; }
+.row.dragging { opacity: .92; }
+.row.dragging .cell-bg, .row.dragging .handle-bg { filter: drop-shadow(0 10px 14px rgba(0,0,0,.35)); stroke: var(--accent); }
+.row.dragging .flip { opacity: 0; }
+.row.ghost-lift .cell-bg { filter: drop-shadow(0 8px 10px rgba(0,0,0,.25)); }
+.cell-bg { fill: var(--cell); stroke: var(--line); stroke-width: 1.5; transition: fill .15s, stroke .15s; }
+.cell.empty .cell-bg { fill: var(--cell-empty); }
+.target { fill: none; stroke: var(--gold); stroke-width: 2; stroke-dasharray: 7 5; opacity: .85; }
+.cell.lit .cell-bg { fill: var(--gold-soft); stroke: var(--gold); }
+.dot.blue { fill: var(--blue); }
+.dot.red { fill: none; stroke: var(--red); stroke-width: 4.5; }
+.dot.ghost { opacity: .45; }
+.dot.in { animation: dotin .28s cubic-bezier(.2,.9,.3,1.3); transform-box: fill-box; transform-origin: center; }
+@keyframes dotin { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.num { font-family: var(--mono); font-size: 40px; font-weight: 500; fill: var(--text); pointer-events: none; }
+.num-small { font-family: var(--mono); font-size: 17px; fill: var(--muted); pointer-events: none; }
+.handle-bg { fill: var(--handle); stroke: var(--line); stroke-width: 1.5; }
+.grip { fill: var(--grip); }
+.swap-bg { fill: var(--accent); }
+.swap-arrow { fill: var(--accent-text); }
+.row.hot .cell-bg { stroke: var(--accent); stroke-width: 2.5; }
+.row.illegal .cell-bg, .row.illegal .half-bg { stroke: var(--danger); }
+.half-bg { fill: var(--blue-soft); stroke: transparent; stroke-width: 2.5; opacity: .5; }
+.half.active .half-bg { opacity: 1; stroke: var(--accent); }
+.minus .half-bg { fill: var(--red-soft); } .minus.active .half-bg { stroke: var(--red); }
+.half-label { font-family: var(--mono); font-size: 34px; font-weight: 500; fill: var(--text); opacity: .45; }
+.half.active .half-label { opacity: .9; }
+.flip { cursor: pointer; }
+.flip-bg { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; transition: fill .15s; }
+.flip:hover .flip-bg, .flip:active .flip-bg { fill: var(--surface2); }
+.flip-label { font-family: var(--mono); font-size: 30px; fill: var(--text); pointer-events: none; }
+.flip.hint-flip .flip-bg { fill: var(--accent); stroke: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.flip.hint-flip .flip-label { fill: var(--accent-text); }
+.row.hint-src .cell-bg, .row.hint-src .handle-bg { stroke: var(--accent); stroke-width: 3; animation: pulse 1.1s ease-in-out infinite; }
+.row.hint-dst .cell-bg { stroke: var(--gold); stroke-width: 2.5; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.bracket { fill: none; stroke: var(--text); stroke-width: 3.5; stroke-linecap: round; opacity: .8; transition: opacity .4s; }
+.board.reveal .bracket { animation: draw 1.2s ease forwards; stroke-dasharray: 800; stroke-dashoffset: 800; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.pop { fill: none; stroke: var(--gold); stroke-width: 3; }
+.beam { fill: var(--gold); }
+.hand-tip { fill: var(--text); opacity: .55; }
+.hand-ring { fill: none; stroke: var(--text); stroke-width: 3; opacity: .5; }
+.caption { margin: 0; color: var(--muted); font-size: 14.5px; text-align: center; max-width: 36ch; }
+.bottombar { display: flex; gap: 8px; padding-block: 8px calc(10px + env(safe-area-inset-bottom, 0px)); position: sticky; bottom: 0; background: var(--bg); }
+.tool { flex: 1; min-height: 56px; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; cursor: pointer; color: var(--text); }
+.tool:disabled { opacity: .4; cursor: default; }
+.tool.accent { border-color: var(--accent); color: var(--accent); }
+.tool.pulse { animation: pulse .8s ease-in-out 3; border-color: var(--warn); }
+.tool.loading { opacity: .6; }
+
+/* mini tahtalar */
+.mini { width: 100%; max-width: 120px; height: auto; display: block; }
+.mini.big { max-width: 200px; margin: 0 auto; }
+.mini-cell { fill: var(--cell); stroke: var(--line); }
+.mini-cell.diag { stroke: var(--gold); stroke-dasharray: 3 2; }
+.mini-blue { fill: var(--blue); } .mini-red { fill: none; stroke: var(--red); stroke-width: 1.8; }
+
+/* günlük */
+.daily { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding-block: 16px; }
+.daily-preview { width: 100%; max-width: 220px; }
+.daily-res { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.big-stars .star { font-size: 30px; }
+
+/* ayarlar */
+.settings { display: flex; flex-direction: column; gap: 14px; padding-block: 8px; }
+.set-row { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.set-row label { font-weight: 600; display: flex; flex-direction: column; gap: 2px; }
+.set-row label small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.segs { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { border: 1px solid var(--line); background: var(--surface2); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-weight: 600; min-height: 40px; }
+.seg.on { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.code { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); color: var(--text); padding: 8px; resize: vertical; }
+.about { color: var(--muted); font-size: 14px; text-align: center; }
+
+/* modallar */
+#modal { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+#modal[hidden] { display: none; }
+.modal-back { position: absolute; inset: 0; background: rgba(5,10,20,.55); backdrop-filter: blur(2px); }
+.modal-card { position: relative; background: var(--surface); color: var(--text); border-radius: 22px 22px 0 0; padding: 22px 20px calc(20px + env(safe-area-inset-bottom, 0px)); width: 100%; max-width: 560px; box-shadow: var(--shadow); box-sizing: border-box; max-height: 88vh; overflow: auto; animation: rise .28s cubic-bezier(.2,.9,.3,1); }
+@media (min-width: 640px) { #modal { align-items: center; padding: 20px; } .modal-card { border-radius: 22px; } }
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-card h2 { margin: 0 0 8px; font-size: 22px; text-wrap: balance; }
+.modal-card p { margin: 0 0 12px; white-space: pre-line; }
+.modal-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.modal-actions .btn { flex: 1; min-width: 120px; }
+.modal-actions.center { justify-content: center; }
+.lab-head { text-align: center; }
+.lab-stars .star { font-size: 34px; }
+.chips { display: flex; gap: 8px; justify-content: center; margin: 6px 0 10px; }
+.chip { background: var(--surface2); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; }
+.chip.accent { background: var(--blue-soft); color: var(--accent); }
+.intro { background: var(--gold-soft); border-left: 3px solid var(--gold); padding: 10px 12px; border-radius: 8px; font-size: 15px; }
+.moves summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.moves ol { margin: 8px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
+.moves li small { display: block; color: var(--muted); font-size: 12.5px; }
+.reveal-title { font-size: 26px; }
+.view-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+.view-opt { border: 1px solid var(--line); background: var(--surface2); border-radius: 14px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+.view-opt:hover { border-color: var(--accent); }
+.view-opt .mini { max-width: 84px; }
+.small-nums { font-size: 12px; color: var(--muted); font-weight: 400; }
+.matrix-pre { font-family: var(--mono); font-size: 18px; margin: 0; line-height: 1.35; padding: 6px 10px; border-left: 3px solid var(--text); border-right: 3px solid var(--text); border-radius: 6px; display: inline-block; }
+.inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; margin: 8px 0; }
+.inv-grid small { display: block; color: var(--muted); margin-bottom: 6px; }
+.help-list { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
+#toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 30; opacity: 0; transition: opacity .25s, transform .25s; max-width: calc(100% - 40px); text-align: center; pointer-events: none; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+body.modal-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001s !important; transition-duration: .001s !important; } }
+@media (max-width: 400px) { .bar-title b { font-size: 15px; } .bar-title small { font-size: 11.5px; } .bar-meta { font-size: 11.5px; } .goal, .goal .mini { width: 40px; height: 40px; } .num { font-size: 36px; } .tool { font-size: 11px; min-height: 52px; } .view-grid { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="screen-home" class="screen"></main>
+  <main id="screen-map" class="screen" hidden></main>
+  <main id="screen-play" class="screen" hidden></main>
+  <main id="screen-daily" class="screen" hidden></main>
+  <main id="screen-settings" class="screen" hidden></main>
+  <div id="modal" hidden></div>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script>window.Asris = window.Asris || {}; window.Asris.config = { version: '1.0.0', distUrl: 'data/dist.bin' };</script>
+<script>window.Asris = window.Asris || {}; window.Asris.data = {"epoch":"2026-09-26","campaign":[{"no":1,"evre":1,"n":2,"board":[[0,1],[1,0]],"par":1,"depth":1,"feda":false,"kademe":"tanitim","sol":["swap12"]},{"no":2,"evre":1,"n":2,"board":[[1,-1],[0,1]],"par":1,"depth":1,"feda":false,"kademe":"tanitim","sol":["add21"]},{"no":3,"evre":1,"n":2,"board":[[1,1],[0,1]],"par":1,"depth":1,"feda":false,"kademe":"tanitim","sol":["sub21"]},{"no":4,"evre":1,"n":2,"board":[[1,0],[0,-1]],"par":1,"depth":1,"feda":false,"kademe":"tanitim","sol":["neg22"]},{"no":5,"evre":1,"n":2,"board":[[-1,0],[1,1]],"par":2,"depth":1,"feda":false,"kademe":"bariz"},{"no":6,"evre":1,"n":2,"board":[[0,-1],[1,2]],"par":3,"depth":1,"feda":false,"kademe":"bariz"},{"no":7,"evre":2,"n":2,"board":[[0,-1],[-1,1]],"par":3,"depth":1,"feda":false,"kademe":"bariz"},{"no":8,"evre":2,"n":2,"board":[[-1,3],[0,-1]],"par":5,"depth":1,"feda":false,"kademe":"bariz"},{"no":9,"evre":2,"n":3,"board":[[0,0,1],[0,1,0],[1,1,0]],"par":2,"depth":1,"feda":false,"kademe":"bariz"},{"no":10,"evre":2,"n":3,"board":[[0,-1,0],[0,0,1],[1,1,0]],"par":3,"depth":1,"feda":false,"kademe":"bariz"},{"no":11,"evre":2,"n":3,"board":[[0,2,1],[1,0,0],[0,-1,0]],"par":4,"depth":1,"feda":false,"kademe":"bariz"},{"no":12,"evre":3,"n":3,"board":[[1,0,-1],[1,0,0],[0,1,0]],"par":3,"depth":1,"feda":false,"kademe":"bariz"},{"no":13,"evre":3,"n":3,"board":[[0,0,-1],[1,1,1],[-1,0,0]],"par":5,"depth":1,"feda":false,"kademe":"bariz"},{"no":14,"evre":3,"n":3,"board":[[-1,0,0],[1,0,1],[1,-1,0]],"par":5,"depth":1,"feda":false,"kademe":"bariz"},{"no":15,"evre":3,"n":3,"board":[[-1,1,0],[1,0,-1],[0,1,0]],"par":5,"depth":1,"feda":false,"kademe":"bariz"},{"no":16,"evre":3,"n":3,"board":[[0,1,0],[0,0,-1],[-1,1,1]],"par":4,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":17,"evre":3,"n":3,"board":[[1,-1,1],[0,0,1],[1,0,1]],"par":4,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":18,"evre":3,"n":3,"board":[[0,-1,0],[1,1,-1],[1,0,0]],"par":4,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":19,"evre":3,"n":3,"board":[[0,0,-1],[-1,1,0],[0,1,-1]],"par":5,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":20,"evre":3,"n":3,"board":[[-1,0,-2],[0,0,-1],[0,-1,0]],"par":6,"depth":1,"feda":false,"kademe":"bariz"},{"no":21,"evre":3,"n":3,"board":[[-1,0,2],[0,1,0],[-1,2,1]],"par":5,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":22,"evre":3,"n":3,"board":[[0,-1,0],[-1,0,0],[-1,-2,-1]],"par":6,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":23,"evre":3,"n":3,"board":[[-1,-2,0],[0,1,-1],[0,-2,1]],"par":6,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":24,"evre":3,"n":3,"board":[[0,-1,0],[0,-2,1],[-1,0,1]],"par":6,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":25,"evre":3,"n":3,"board":[[0,-1,0],[0,-1,-1],[-1,2,0]],"par":7,"depth":1,"feda":false,"kademe":"bariz"},{"no":26,"evre":3,"n":3,"board":[[1,-2,1],[0,0,1],[-1,1,0]],"par":5,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":27,"evre":3,"n":3,"board":[[0,-1,-1],[-1,0,-2],[0,0,-1]],"par":6,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":28,"evre":3,"n":3,"board":[[0,1,-1],[-2,0,1],[-1,1,0]],"par":6,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":29,"evre":3,"n":3,"board":[[0,2,-1],[0,-1,0],[-1,1,0]],"par":6,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":30,"evre":3,"n":3,"board":[[-2,1,0],[0,1,-1],[-1,0,0]],"par":6,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":31,"evre":3,"n":3,"board":[[0,1,0],[-1,1,-3],[-1,0,-2]],"par":6,"depth":3,"feda":true,"kademe":"feda"},{"no":32,"evre":3,"n":3,"board":[[0,0,-1],[-1,-2,0],[1,3,1]],"par":6,"depth":3,"feda":true,"kademe":"feda"},{"no":33,"evre":3,"n":3,"board":[[0,0,1],[-1,-1,3],[0,-1,-1]],"par":7,"depth":3,"feda":true,"kademe":"feda"},{"no":34,"evre":3,"n":3,"board":[[0,1,0],[-1,-1,0],[2,-2,1]],"par":6,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":35,"evre":3,"n":3,"board":[[-1,0,-1],[-1,0,0],[3,-1,-1]],"par":8,"depth":3,"feda":false,"kademe":"kombinasyon"},{"no":36,"evre":3,"n":3,"board":[[2,2,-1],[-1,0,0],[-2,1,0]],"par":8,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":37,"evre":3,"n":3,"board":[[0,-1,1],[-1,1,-2],[-1,0,0]],"par":6,"depth":4,"feda":false,"kademe":"kombinasyon"},{"no":38,"evre":3,"n":3,"board":[[0,-1,-1],[-1,0,0],[2,1,2]],"par":6,"depth":4,"feda":false,"kademe":"kombinasyon"},{"no":39,"evre":3,"n":3,"board":[[1,1,-1],[-1,1,0],[0,-3,1]],"par":7,"depth":4,"feda":true,"kademe":"feda"},{"no":40,"evre":3,"n":3,"board":[[-1,3,1],[-1,-1,0],[0,-1,0]],"par":7,"depth":3,"feda":true,"kademe":"feda"},{"no":41,"evre":3,"n":3,"board":[[-1,-1,-1],[1,0,0],[2,-2,-1]],"par":7,"depth":4,"feda":false,"kademe":"kombinasyon"},{"no":42,"evre":3,"n":3,"board":[[0,1,-1],[1,-3,0],[-1,0,2]],"par":8,"depth":2,"feda":false,"kademe":"hazirlik"},{"no":43,"evre":3,"n":3,"board":[[-1,-2,0],[-1,0,-3],[0,-1,1]],"par":8,"depth":5,"feda":false,"kademe":"kombinasyon"},{"no":44,"evre":3,"n":3,"board":[[1,0,-1],[0,-1,-2],[-2,-1,-1]],"par":7,"depth":5,"feda":true,"kademe":"feda"},{"no":45,"evre":3,"n":3,"board":[[0,-1,-1],[1,0,-1],[-3,-2,0]],"par":7,"depth":5,"feda":false,"kademe":"kombinasyon"}],"daily":[{"board":[[0,0,-1],[1,2,0],[-1,-3,2]],"par":6,"depth":3,"feda":true},{"board":[[1,-2,0],[-1,1,0],[2,2,-1]],"par":8,"depth":4,"feda":true},{"board":[[1,-2,0],[0,0,1],[1,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,0],[0,1,-3],[1,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[-2,0,1],[-1,1,1],[-2,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[3,-2,1],[0,1,-1],[1,0,0]],"par":6,"depth":2,"feda":false},{"board":[[-1,0,1],[0,2,-1],[1,1,-2]],"par":6,"depth":3,"feda":false},{"board":[[1,3,2],[0,-1,1],[0,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,1],[0,1,-2],[2,-2,1]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,1],[1,-2,0],[1,-1,0]],"par":5,"depth":1,"feda":false},{"board":[[-1,0,1],[2,1,1],[1,1,1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-1],[2,0,-1],[-1,1,1]],"par":5,"depth":2,"feda":false},{"board":[[-1,2,0],[1,-3,0],[-1,0,1]],"par":6,"depth":2,"feda":false},{"board":[[1,0,-2],[-2,2,1],[0,-1,1]],"par":7,"depth":3,"feda":true},{"board":[[0,-2,1],[2,-3,0],[1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[-1,2,-1],[0,1,1],[1,0,2]],"par":6,"depth":4,"feda":true},{"board":[[-1,1,1],[0,1,1],[-3,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,-1],[2,1,1],[-1,-1,-1]],"par":6,"depth":1,"feda":false},{"board":[[2,1,0],[-1,0,2],[2,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,1,1],[-1,-1,-2],[-1,0,-1]],"par":5,"depth":2,"feda":false},{"board":[[1,1,-1],[-2,-1,0],[0,-1,3]],"par":6,"depth":3,"feda":false},{"board":[[-1,-1,1],[1,0,-1],[-2,0,1]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,1],[0,1,-2],[-1,2,2]],"par":8,"depth":4,"feda":false},{"board":[[-1,0,1],[-1,1,1],[2,2,-1]],"par":6,"depth":1,"feda":false},{"board":[[0,1,0],[1,2,1],[0,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[-1,1,-1],[1,0,-1],[2,-2,1]],"par":6,"depth":2,"feda":false},{"board":[[-1,-1,0],[1,2,-2],[1,0,1]],"par":6,"depth":3,"feda":false},{"board":[[0,1,1],[-2,2,1],[-1,-1,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-1],[1,0,-1],[-2,1,0]],"par":6,"depth":3,"feda":false},{"board":[[1,0,0],[-3,1,3],[0,0,1]],"par":5,"depth":3,"feda":true},{"board":[[-1,0,0],[-2,-1,0],[1,1,1]],"par":5,"depth":1,"feda":false},{"board":[[3,-1,1],[0,-1,0],[2,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[-2,1,-2],[1,-1,1],[-1,0,0]],"par":6,"depth":2,"feda":false},{"board":[[0,0,1],[2,1,3],[-1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[3,0,-1],[2,1,0],[-1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[1,-1,-1],[2,-1,1],[-1,0,-1]],"par":6,"depth":4,"feda":false},{"board":[[-1,1,-1],[-2,0,-1],[0,3,-1]],"par":7,"depth":4,"feda":false},{"board":[[1,0,0],[-2,1,2],[-1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-3,2,0],[-1,1,0],[-1,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[0,1,1],[-1,2,-1],[0,2,1]],"par":7,"depth":2,"feda":false},{"board":[[1,1,-1],[-2,-1,-2],[1,1,0]],"par":6,"depth":2,"feda":false},{"board":[[2,2,1],[-1,0,0],[0,-3,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,0],[-2,1,-1],[2,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[2,-2,-1],[-2,1,0],[1,-1,0]],"par":6,"depth":4,"feda":true},{"board":[[0,1,1],[1,-2,-2],[-1,0,1]],"par":5,"depth":1,"feda":false},{"board":[[-2,1,-1],[2,0,1],[1,1,1]],"par":5,"depth":1,"feda":false},{"board":[[0,0,-1],[1,0,3],[-1,1,-3]],"par":6,"depth":2,"feda":false},{"board":[[3,-1,-3],[0,0,-1],[1,0,0]],"par":7,"depth":2,"feda":true},{"board":[[-1,1,-1],[0,-1,2],[3,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[0,0,-1],[-2,-1,-1],[1,1,3]],"par":7,"depth":3,"feda":false},{"board":[[3,-2,1],[-2,0,-1],[0,-1,0]],"par":7,"depth":4,"feda":false},{"board":[[2,1,-3],[1,1,0],[0,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[3,-1,-1],[1,0,0],[1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,1],[-1,-1,1],[0,-2,1]],"par":6,"depth":2,"feda":false},{"board":[[1,0,0],[-1,-2,1],[1,3,-1]],"par":5,"depth":2,"feda":false},{"board":[[0,-2,3],[1,0,-1],[2,-1,0]],"par":8,"depth":3,"feda":false},{"board":[[2,-3,0],[0,0,-1],[1,-2,1]],"par":6,"depth":4,"feda":false},{"board":[[0,-2,1],[2,3,-1],[-1,0,0]],"par":6,"depth":3,"feda":true},{"board":[[0,-1,-1],[-1,0,-1],[1,2,2]],"par":5,"depth":1,"feda":false},{"board":[[0,0,-1],[-1,1,1],[-2,1,2]],"par":5,"depth":1,"feda":false},{"board":[[0,0,1],[-2,1,1],[-1,1,1]],"par":5,"depth":2,"feda":false},{"board":[[1,-2,-1],[1,-1,-1],[1,1,0]],"par":5,"depth":2,"feda":false},{"board":[[0,-2,-3],[-1,0,1],[1,1,0]],"par":7,"depth":3,"feda":false},{"board":[[-1,3,0],[-1,0,-2],[-1,1,-1]],"par":7,"depth":4,"feda":false},{"board":[[0,-1,-2],[-1,0,1],[-1,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[1,-1,-2],[1,0,-3],[0,1,0]],"par":6,"depth":1,"feda":false},{"board":[[0,1,1],[0,2,3],[-1,1,1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-1],[-1,-1,1],[1,2,0]],"par":5,"depth":2,"feda":false},{"board":[[1,0,0],[3,-1,1],[-1,-2,1]],"par":7,"depth":2,"feda":false},{"board":[[-1,-1,1],[-3,0,1],[1,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[-1,-1,2],[0,2,-1],[-1,0,2]],"par":7,"depth":3,"feda":false},{"board":[[0,1,0],[0,3,-1],[-1,-2,-2]],"par":9,"depth":4,"feda":true},{"board":[[0,0,-1],[-1,1,-1],[1,0,0]],"par":4,"depth":1,"feda":false},{"board":[[-2,0,1],[0,1,3],[-1,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,0],[0,-2,3],[0,1,-2]],"par":6,"depth":2,"feda":false},{"board":[[1,1,-1],[0,-3,2],[0,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,-2,0],[0,1,-1],[2,-2,-1]],"par":6,"depth":3,"feda":false},{"board":[[-3,1,0],[2,0,-1],[0,-1,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,-2,2],[-1,0,1],[1,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[2,2,1],[-1,-1,-1],[0,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,1,0],[1,0,1],[2,1,0]],"par":5,"depth":1,"feda":false},{"board":[[1,-2,-1],[0,3,2],[1,0,0]],"par":6,"depth":2,"feda":false},{"board":[[1,3,1],[0,1,0],[1,3,0]],"par":5,"depth":2,"feda":false},{"board":[[1,-1,-1],[1,-2,0],[1,0,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,1,1],[-2,2,-1],[-1,0,-1]],"par":6,"depth":4,"feda":false},{"board":[[1,0,-1],[0,-1,0],[-2,2,1]],"par":6,"depth":4,"feda":true},{"board":[[0,0,-1],[0,-1,1],[1,-2,3]],"par":6,"depth":1,"feda":false},{"board":[[-1,3,1],[-1,1,0],[-1,2,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,-2],[2,0,1],[-1,0,0]],"par":7,"depth":2,"feda":false},{"board":[[3,-1,-1],[0,1,0],[-2,-1,1]],"par":5,"depth":2,"feda":false},{"board":[[1,-3,2],[0,0,1],[0,-1,-2]],"par":8,"depth":3,"feda":false},{"board":[[1,-1,-2],[-1,0,1],[0,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[2,0,3],[-1,1,-2],[0,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[0,-1,1],[0,-2,1],[1,0,0]],"par":4,"depth":1,"feda":false},{"board":[[0,1,0],[-1,-2,0],[1,0,1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,1],[1,-1,0],[0,2,1]],"par":5,"depth":2,"feda":false},{"board":[[-2,0,3],[0,1,0],[1,-1,-2]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-1],[-1,2,1],[0,-2,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,-3],[-1,2,0],[0,1,1]],"par":7,"depth":4,"feda":false},{"board":[[3,-1,1],[-1,0,1],[-2,0,1]],"par":7,"depth":4,"feda":true},{"board":[[0,-1,-1],[1,0,-2],[-1,1,2]],"par":6,"depth":1,"feda":false},{"board":[[-1,-1,1],[2,1,-2],[1,0,0]],"par":5,"depth":2,"feda":false},{"board":[[-2,1,1],[1,0,1],[-1,1,1]],"par":6,"depth":2,"feda":false},{"board":[[-1,0,2],[0,0,-1],[1,-1,-3]],"par":7,"depth":2,"feda":false},{"board":[[0,-1,1],[-1,2,0],[1,-1,-2]],"par":7,"depth":3,"feda":false},{"board":[[1,-3,3],[0,0,-1],[0,1,1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-1],[2,-1,1],[0,-1,2]],"par":6,"depth":4,"feda":true},{"board":[[0,1,1],[0,2,1],[1,1,0]],"par":4,"depth":1,"feda":false},{"board":[[1,2,-2],[-1,-1,2],[0,0,1]],"par":5,"depth":1,"feda":false},{"board":[[1,-1,1],[0,-1,3],[-1,1,0]],"par":6,"depth":2,"feda":false},{"board":[[1,1,-1],[-1,0,0],[0,2,-1]],"par":5,"depth":2,"feda":false},{"board":[[1,2,0],[0,1,-1],[-2,-2,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,0],[1,3,-2],[1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[0,0,1],[1,2,0],[1,3,2]],"par":6,"depth":3,"feda":true},{"board":[[1,-1,1],[0,1,-3],[-1,1,0]],"par":5,"depth":1,"feda":false},{"board":[[2,-1,0],[0,0,1],[-1,1,3]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[0,-1,1],[-3,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,3],[0,-2,1],[0,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,-2,2],[-1,2,-1],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-2],[-1,1,-1],[0,-1,1]],"par":6,"depth":3,"feda":true},{"board":[[-1,-1,1],[1,-2,1],[-2,0,1]],"par":7,"depth":4,"feda":false},{"board":[[-1,0,-2],[0,-1,-1],[1,0,1]],"par":5,"depth":1,"feda":false},{"board":[[0,-1,-2],[0,1,1],[1,-2,0]],"par":6,"depth":1,"feda":false},{"board":[[1,1,1],[-1,0,3],[-1,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[-1,0,-1],[-2,-1,-1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[-1,2,1],[-2,1,0],[1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[-2,-1,1],[1,0,-1],[2,0,-1]],"par":6,"depth":3,"feda":false},{"board":[[-1,2,0],[0,0,-1],[1,-3,2]],"par":7,"depth":4,"feda":true},{"board":[[2,0,-1],[-3,0,2],[1,1,0]],"par":5,"depth":1,"feda":false},{"board":[[-2,0,1],[1,0,0],[0,1,2]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,0],[1,3,-1],[-1,-1,2]],"par":6,"depth":2,"feda":false},{"board":[[0,0,-1],[-1,-1,-2],[1,2,2]],"par":5,"depth":3,"feda":false},{"board":[[-1,2,-1],[0,-1,-1],[-1,2,0]],"par":6,"depth":3,"feda":false},{"board":[[1,3,-1],[-1,0,-1],[-1,-2,0]],"par":7,"depth":4,"feda":false},{"board":[[1,-2,2],[-2,1,0],[1,0,-1]],"par":7,"depth":4,"feda":true},{"board":[[1,2,1],[1,1,1],[0,-1,-1]],"par":5,"depth":1,"feda":false},{"board":[[0,1,1],[1,-2,1],[0,1,2]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,-1],[-1,-1,2],[0,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[-1,0,0],[1,-1,1],[0,2,-3]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,0],[1,1,3],[0,-1,-2]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-1],[-1,0,-1],[-1,-2,0]],"par":6,"depth":4,"feda":false},{"board":[[0,-1,1],[0,1,-2],[1,1,3]],"par":7,"depth":4,"feda":true},{"board":[[2,1,0],[1,0,0],[2,2,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,1,2],[0,-2,-1],[0,-1,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,1],[2,-1,0],[2,-1,1]],"par":5,"depth":2,"feda":false},{"board":[[1,0,2],[-1,1,1],[-2,1,0]],"par":6,"depth":2,"feda":false},{"board":[[0,1,0],[0,-1,-1],[-1,3,-2]],"par":8,"depth":3,"feda":false},{"board":[[-1,0,-1],[2,-1,0],[2,-2,-1]],"par":6,"depth":3,"feda":false},{"board":[[2,0,-3],[1,1,-2],[0,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[-1,0,1],[0,-1,2],[0,2,-3]],"par":6,"depth":1,"feda":false},{"board":[[0,1,1],[1,-1,-2],[0,2,1]],"par":6,"depth":1,"feda":false},{"board":[[-2,1,0],[1,0,-1],[2,-2,1]],"par":7,"depth":2,"feda":false},{"board":[[0,0,-1],[1,-1,1],[-2,1,2]],"par":7,"depth":2,"feda":false},{"board":[[0,-1,2],[-2,-1,3],[-1,0,0]],"par":7,"depth":3,"feda":true},{"board":[[1,2,-2],[0,-3,-1],[0,1,0]],"par":8,"depth":3,"feda":false},{"board":[[2,-2,1],[0,1,-2],[-1,0,1]],"par":7,"depth":3,"feda":true},{"board":[[1,-1,0],[2,-3,-1],[0,1,0]],"par":6,"depth":1,"feda":false},{"board":[[0,1,0],[-1,2,-1],[-1,3,0]],"par":6,"depth":1,"feda":false},{"board":[[0,-2,1],[0,1,-1],[1,3,0]],"par":7,"depth":2,"feda":false},{"board":[[0,-1,1],[-1,0,-3],[0,-1,2]],"par":7,"depth":2,"feda":false},{"board":[[0,2,-1],[-1,1,-1],[-1,-2,0]],"par":6,"depth":3,"feda":false},{"board":[[1,1,0],[0,-1,-1],[-2,1,2]],"par":6,"depth":3,"feda":false},{"board":[[0,-3,1],[-1,1,0],[2,0,-1]],"par":8,"depth":5,"feda":false},{"board":[[2,2,-1],[0,1,1],[1,1,-1]],"par":5,"depth":1,"feda":false},{"board":[[-1,2,1],[-1,0,-2],[0,1,2]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[-1,-3,2],[-1,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[-3,2,0],[-1,0,-1],[-1,1,1]],"par":6,"depth":2,"feda":false},{"board":[[1,3,2],[0,0,-1],[0,1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-1],[1,-1,1],[-2,-2,1]],"par":7,"depth":4,"feda":false},{"board":[[3,-1,-2],[1,0,0],[1,-1,-1]],"par":6,"depth":3,"feda":true},{"board":[[0,1,0],[-1,-2,1],[-2,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,0],[0,1,0],[-1,-3,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,2,1],[0,-1,-2],[-1,2,0]],"par":7,"depth":2,"feda":false},{"board":[[1,-2,-1],[0,-1,1],[-1,0,2]],"par":6,"depth":2,"feda":false},{"board":[[1,0,-2],[-1,0,1],[0,1,3]],"par":6,"depth":3,"feda":false},{"board":[[0,-3,2],[-1,-1,1],[0,1,-1]],"par":7,"depth":4,"feda":false},{"board":[[2,1,0],[-1,-1,2],[1,0,1]],"par":6,"depth":4,"feda":true},{"board":[[0,1,0],[-1,2,0],[-1,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[0,-1,-3],[1,0,3],[0,0,1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,1],[-2,2,1],[0,1,1]],"par":6,"depth":2,"feda":false},{"board":[[0,-3,-2],[2,1,1],[1,0,0]],"par":7,"depth":2,"feda":false},{"board":[[-1,2,0],[1,0,-1],[-2,1,1]],"par":6,"depth":3,"feda":false},{"board":[[-1,0,1],[0,-3,-2],[1,2,0]],"par":7,"depth":3,"feda":false},{"board":[[1,1,0],[0,2,-1],[-2,1,-1]],"par":6,"depth":4,"feda":true},{"board":[[1,2,-2],[0,-1,2],[-1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-2,-1,0],[3,1,0],[2,0,1]],"par":6,"depth":1,"feda":false},{"board":[[0,-3,1],[0,1,0],[1,3,-1]],"par":5,"depth":2,"feda":false},{"board":[[0,-1,1],[-1,-2,1],[0,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[-1,-1,0],[0,1,-2],[2,2,-1]],"par":6,"depth":3,"feda":false},{"board":[[-1,-1,1],[2,0,-1],[-1,2,0]],"par":6,"depth":3,"feda":false},{"board":[[1,3,-2],[0,0,-1],[1,2,0]],"par":7,"depth":4,"feda":false},{"board":[[0,1,0],[1,-1,0],[0,2,1]],"par":4,"depth":1,"feda":false},{"board":[[0,1,1],[1,1,3],[0,-1,0]],"par":6,"depth":1,"feda":false},{"board":[[3,1,0],[1,0,1],[-1,-1,1]],"par":5,"depth":2,"feda":false},{"board":[[2,0,-3],[1,1,0],[0,1,2]],"par":5,"depth":2,"feda":false},{"board":[[0,1,1],[2,0,-1],[-3,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[2,1,1],[1,-1,1],[0,-2,1]],"par":7,"depth":3,"feda":false},{"board":[[-2,-3,2],[0,1,-1],[1,0,0]],"par":7,"depth":5,"feda":true},{"board":[[-1,0,0],[1,-1,0],[3,-3,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,-2],[1,0,0],[-2,0,1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[1,-1,-2],[1,1,1]],"par":5,"depth":2,"feda":false},{"board":[[1,0,3],[-1,1,-1],[0,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[-1,-1,0],[3,-2,1],[-1,0,0]],"par":8,"depth":3,"feda":false},{"board":[[1,2,0],[0,1,1],[2,2,-1]],"par":6,"depth":3,"feda":false},{"board":[[2,1,-2],[0,-1,-1],[-1,-1,0]],"par":7,"depth":4,"feda":false},{"board":[[1,1,2],[0,0,1],[-1,0,-2]],"par":5,"depth":1,"feda":false},{"board":[[0,3,2],[1,0,0],[1,-2,-1]],"par":6,"depth":1,"feda":false},{"board":[[0,1,1],[1,-2,1],[1,0,2]],"par":7,"depth":2,"feda":false},{"board":[[1,1,-2],[-1,0,0],[-1,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,0,-1],[2,1,1],[0,1,2]],"par":6,"depth":3,"feda":true},{"board":[[0,1,1],[-3,1,-1],[-2,1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,-2],[1,0,0],[2,1,3]],"par":6,"depth":3,"feda":true},{"board":[[1,2,0],[1,3,0],[-2,0,1]],"par":5,"depth":1,"feda":false},{"board":[[0,0,1],[0,-1,-2],[1,1,3]],"par":6,"depth":1,"feda":false},{"board":[[0,0,-1],[1,1,2],[-1,-2,2]],"par":7,"depth":2,"feda":false},{"board":[[-1,3,-1],[-1,2,1],[0,0,1]],"par":6,"depth":2,"feda":false},{"board":[[3,0,2],[-1,1,-1],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[2,1,-2],[1,0,1],[2,0,1]],"par":7,"depth":4,"feda":true},{"board":[[0,0,1],[-2,3,1],[1,-2,0]],"par":6,"depth":4,"feda":false},{"board":[[-1,0,1],[1,1,0],[0,2,1]],"par":6,"depth":1,"feda":false},{"board":[[-2,3,0],[0,0,1],[1,-2,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-3],[-1,0,2],[0,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[1,0,1],[0,1,2],[2,-2,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,1,1],[3,-1,-2],[-1,0,0]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,1],[2,0,1],[0,3,-1]],"par":7,"depth":4,"feda":false},{"board":[[-1,0,1],[1,0,-2],[2,-1,2]],"par":8,"depth":5,"feda":true},{"board":[[1,1,0],[-1,-2,2],[1,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,-1],[-1,2,1],[-1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,1,1],[1,1,0],[-2,-3,0]],"par":6,"depth":2,"feda":false},{"board":[[1,-1,2],[-1,1,-1],[-1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[0,1,0],[-1,0,2],[-1,-2,3]],"par":6,"depth":3,"feda":true},{"board":[[0,-1,-2],[1,1,1],[-1,1,2]],"par":6,"depth":3,"feda":false},{"board":[[1,0,-1],[3,-1,0],[1,-1,1]],"par":6,"depth":4,"feda":true},{"board":[[0,0,-1],[1,0,2],[2,1,0]],"par":6,"depth":1,"feda":false},{"board":[[-3,1,-2],[0,-1,0],[1,0,1]],"par":6,"depth":1,"feda":false},{"board":[[2,1,-2],[-2,-1,1],[1,0,0]],"par":6,"depth":2,"feda":false},{"board":[[1,0,2],[1,0,1],[-1,-1,2]],"par":7,"depth":2,"feda":false},{"board":[[0,-2,1],[0,-1,1],[-1,1,-2]],"par":7,"depth":3,"feda":false},{"board":[[2,-2,1],[-2,1,-1],[-1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[2,-1,0],[1,-1,-2],[1,0,1]],"par":6,"depth":4,"feda":true},{"board":[[1,0,-2],[1,-1,0],[0,0,1]],"par":4,"depth":1,"feda":false},{"board":[[3,2,1],[2,1,0],[0,0,1]],"par":5,"depth":1,"feda":false},{"board":[[0,0,1],[-1,2,1],[-1,1,2]],"par":5,"depth":2,"feda":false},{"board":[[-1,2,0],[0,-1,-1],[-1,2,1]],"par":5,"depth":2,"feda":false},{"board":[[-1,1,-2],[0,2,-1],[1,0,2]],"par":6,"depth":3,"feda":false},{"board":[[-1,-1,1],[1,2,2],[-1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,2],[1,1,-2],[1,-1,1]],"par":6,"depth":4,"feda":false},{"board":[[1,0,3],[-1,1,-3],[0,0,1]],"par":4,"depth":1,"feda":false},{"board":[[0,0,1],[0,1,-3],[-1,-1,1]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,1],[0,-3,1],[1,1,0]],"par":7,"depth":2,"feda":false},{"board":[[0,-2,1],[-2,-1,1],[1,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[1,-3,0],[0,1,-1],[1,-1,-1]],"par":7,"depth":3,"feda":false},{"board":[[-1,-2,3],[0,0,1],[-1,-1,-1]],"par":8,"depth":4,"feda":false},{"board":[[3,1,-1],[1,-1,0],[-2,1,0]],"par":8,"depth":5,"feda":true},{"board":[[0,1,1],[2,1,0],[-1,2,2]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[0,-1,2],[-3,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[2,-1,0],[0,0,-1],[1,0,-2]],"par":7,"depth":2,"feda":false},{"board":[[-1,1,-1],[1,0,2],[1,-2,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,1,0],[0,1,0],[3,-3,1]],"par":6,"depth":3,"feda":false},{"board":[[-2,-1,2],[0,1,1],[1,2,0]],"par":7,"depth":3,"feda":false},{"board":[[-1,-1,0],[2,1,-1],[1,-1,-1]],"par":6,"depth":4,"feda":false},{"board":[[-2,1,-1],[1,-1,0],[2,0,1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,-1],[-1,0,0],[2,1,-1]],"par":5,"depth":1,"feda":false},{"board":[[0,-1,3],[1,0,0],[-2,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[-1,1,1],[-1,2,-1],[-1,0,2]],"par":6,"depth":2,"feda":false},{"board":[[1,0,0],[3,3,-1],[0,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[3,2,1],[0,0,-1],[-2,-1,0]],"par":6,"depth":4,"feda":false},{"board":[[2,0,1],[-1,1,0],[-1,-2,-1]],"par":6,"depth":4,"feda":true},{"board":[[1,0,0],[2,-1,0],[3,-2,1]],"par":5,"depth":1,"feda":false},{"board":[[1,-1,-2],[0,1,-1],[0,2,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,1,2],[-1,2,0],[-1,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,-1],[1,1,2],[1,-1,1]],"par":5,"depth":3,"feda":false},{"board":[[-1,1,0],[-1,2,-1],[0,-2,1]],"par":6,"depth":3,"feda":false},{"board":[[0,3,1],[-1,-1,-1],[-2,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,1,0],[-1,1,-1],[-3,0,-1]],"par":6,"depth":4,"feda":true},{"board":[[-1,1,0],[0,-1,2],[0,1,-1]],"par":5,"depth":1,"feda":false},{"board":[[0,1,-1],[1,-2,1],[-1,1,1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,0],[-2,-3,2],[0,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,0,-3],[1,1,-1],[0,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,2],[-1,1,-2],[1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,0],[1,1,-1],[2,-2,1]],"par":7,"depth":4,"feda":false},{"board":[[1,-1,-1],[1,1,0],[0,3,1]],"par":6,"depth":3,"feda":true},{"board":[[1,1,0],[0,-1,0],[1,2,1]],"par":4,"depth":1,"feda":false},{"board":[[0,-2,1],[0,-1,1],[-1,2,-1]],"par":6,"depth":1,"feda":false},{"board":[[-2,3,2],[0,-1,-1],[-1,0,0]],"par":7,"depth":2,"feda":false},{"board":[[1,-2,-1],[1,0,2],[-1,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,-1],[3,2,1],[-1,0,0]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,3],[1,1,0],[-1,0,-2]],"par":6,"depth":3,"feda":false},{"board":[[0,0,-1],[-1,1,0],[-2,3,-2]],"par":7,"depth":5,"feda":true},{"board":[[2,1,2],[0,-1,1],[1,2,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[0,-1,-1],[-1,3,2]],"par":5,"depth":1,"feda":false},{"board":[[-1,2,1],[-1,2,0],[0,-1,-2]],"par":7,"depth":2,"feda":false},{"board":[[1,1,0],[1,1,-1],[3,2,0]],"par":6,"depth":2,"feda":false},{"board":[[0,0,-1],[1,3,-2],[0,-1,-1]],"par":8,"depth":3,"feda":false},{"board":[[0,-2,-1],[-1,0,1],[-1,-1,1]],"par":6,"depth":3,"feda":false},{"board":[[2,2,-1],[-2,1,0],[-1,1,0]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,1],[0,1,-1],[3,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-1],[2,-1,1],[0,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[2,-1,1],[0,0,1],[-1,0,0]],"par":5,"depth":2,"feda":false},{"board":[[2,1,-2],[0,-1,-1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,0],[1,0,0],[3,-2,1]],"par":6,"depth":3,"feda":false},{"board":[[1,0,1],[-1,0,0],[-3,-1,3]],"par":8,"depth":3,"feda":false},{"board":[[1,-2,0],[1,-1,-1],[1,1,-2]],"par":7,"depth":4,"feda":false},{"board":[[1,-1,1],[-1,1,0],[-2,1,2]],"par":6,"depth":1,"feda":false},{"board":[[0,0,1],[-1,-1,-1],[3,2,0]],"par":6,"depth":1,"feda":false},{"board":[[-1,-2,2],[0,-1,1],[0,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[1,1,1],[-2,0,-1],[0,3,1]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,-2],[2,-1,0],[-1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,1,1],[1,2,-1],[-1,-2,0]],"par":6,"depth":3,"feda":false},{"board":[[2,1,-3],[1,0,0],[0,-1,2]],"par":6,"depth":3,"feda":true},{"board":[[1,1,0],[-1,2,1],[-1,-2,0]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,-1],[1,2,2],[-1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[-2,1,0],[3,-2,-1],[0,0,1]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,0],[2,-3,1],[0,0,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,1,2],[1,2,0],[0,-1,1]],"par":6,"depth":3,"feda":true},{"board":[[1,0,-1],[-2,2,-1],[0,1,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,-1],[0,1,2],[-1,-2,2]],"par":7,"depth":4,"feda":true},{"board":[[2,1,1],[-1,-1,-1],[-1,0,-1]],"par":5,"depth":1,"feda":false},{"board":[[-1,1,1],[0,1,0],[-2,0,3]],"par":5,"depth":1,"feda":false},{"board":[[-2,1,1],[3,-1,-1],[0,0,1]],"par":5,"depth":2,"feda":false},{"board":[[-1,0,1],[2,1,0],[0,1,1]],"par":5,"depth":2,"feda":false},{"board":[[-1,1,-2],[3,-1,1],[-1,0,0]],"par":8,"depth":3,"feda":false},{"board":[[3,2,0],[0,1,1],[-2,0,1]],"par":7,"depth":3,"feda":true},{"board":[[1,0,1],[3,-1,0],[-1,1,1]],"par":6,"depth":4,"feda":true},{"board":[[0,1,0],[-1,1,2],[1,-2,-1]],"par":6,"depth":1,"feda":false},{"board":[[2,1,1],[1,0,1],[-1,1,-1]],"par":5,"depth":1,"feda":false},{"board":[[0,1,1],[-2,3,0],[1,-1,1]],"par":6,"depth":2,"feda":false},{"board":[[-2,0,1],[-1,2,-1],[1,-1,0]],"par":7,"depth":2,"feda":false},{"board":[[2,1,1],[0,0,1],[-3,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[1,-2,0],[3,-1,1],[-1,1,0]],"par":7,"depth":3,"feda":false},{"board":[[3,-1,1],[-2,0,1],[1,0,-1]],"par":8,"depth":5,"feda":true},{"board":[[0,-1,-1],[0,1,0],[-1,0,3]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,0],[0,-2,1],[-1,2,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,0],[-1,1,1],[1,0,-3]],"par":6,"depth":2,"feda":false},{"board":[[2,-1,-1],[-1,-1,-2],[1,0,0]],"par":7,"depth":2,"feda":false},{"board":[[1,-2,3],[0,-1,-1],[0,1,0]],"par":7,"depth":3,"feda":false},{"board":[[0,0,-1],[2,1,3],[1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[1,3,3],[0,1,0],[0,0,1]],"par":5,"depth":3,"feda":true},{"board":[[1,0,-1],[1,1,-1],[1,-1,-2]],"par":5,"depth":1,"feda":false},{"board":[[-1,-1,-1],[2,-1,1],[0,1,0]],"par":6,"depth":1,"feda":false},{"board":[[0,0,1],[-3,2,0],[1,-1,2]],"par":7,"depth":2,"feda":false},{"board":[[0,1,0],[-1,-1,2],[-1,-3,1]],"par":7,"depth":2,"feda":false},{"board":[[-1,-1,0],[0,-1,2],[2,2,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,-2],[-1,0,0],[0,2,3]],"par":6,"depth":4,"feda":false},{"board":[[0,0,-1],[-1,3,-3],[0,-1,0]],"par":8,"depth":4,"feda":false},{"board":[[-2,3,0],[0,0,-1],[-1,2,1]],"par":6,"depth":1,"feda":false},{"board":[[1,-3,0],[0,1,0],[-3,1,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,-1,-3],[2,1,-1],[0,0,1]],"par":7,"depth":2,"feda":false},{"board":[[-2,2,-1],[1,-1,0],[0,-1,1]],"par":6,"depth":2,"feda":false},{"board":[[1,-1,0],[-1,1,-1],[0,1,-3]],"par":7,"depth":3,"feda":false},{"board":[[0,0,-1],[1,-1,3],[-2,1,-1]],"par":8,"depth":3,"feda":false},{"board":[[1,0,2],[1,0,1],[-2,1,2]],"par":7,"depth":4,"feda":true},{"board":[[2,1,0],[-1,0,0],[1,0,1]],"par":4,"depth":1,"feda":false},{"board":[[-1,-1,1],[2,1,-1],[-1,1,0]],"par":5,"depth":2,"feda":false},{"board":[[0,3,1],[1,1,1],[2,0,1]],"par":7,"depth":2,"feda":false},{"board":[[-1,1,-1],[2,-2,1],[0,-1,1]],"par":6,"depth":2,"feda":false},{"board":[[1,2,-2],[0,1,-2],[1,0,1]],"par":6,"depth":3,"feda":false},{"board":[[-2,-1,1],[2,0,-1],[-1,1,0]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,0],[0,2,1],[-2,-1,-1]],"par":6,"depth":4,"feda":true},{"board":[[-1,0,-1],[-2,1,-1],[1,0,0]],"par":5,"depth":1,"feda":false},{"board":[[0,-1,1],[-3,1,1],[2,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,-1,-2],[0,1,0],[1,2,1]],"par":5,"depth":2,"feda":false},{"board":[[1,0,3],[1,1,0],[0,-1,2]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,1],[-1,1,-1],[2,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,1],[2,1,-1],[0,-1,2]],"par":6,"depth":3,"feda":true},{"board":[[3,-1,0],[-2,-2,-1],[1,0,0]],"par":9,"depth":4,"feda":true},{"board":[[1,-1,1],[0,-1,1],[2,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,0],[-1,1,-1],[-2,2,-1]],"par":5,"depth":1,"feda":false},{"board":[[1,-1,-1],[1,-1,0],[-1,2,0]],"par":5,"depth":2,"feda":false},{"board":[[-1,0,0],[1,-3,2],[-1,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,1,-2],[-1,0,1],[-2,2,-1]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,0],[2,1,-2],[0,-1,1]],"par":6,"depth":4,"feda":true},{"board":[[1,-2,0],[2,2,-1],[1,-1,0]],"par":7,"depth":4,"feda":true},{"board":[[1,2,-2],[0,-1,-1],[0,0,1]],"par":6,"depth":1,"feda":false},{"board":[[0,0,1],[0,1,2],[-1,-1,-2]],"par":5,"depth":1,"feda":false},{"board":[[-1,0,-1],[0,-2,1],[0,3,-2]],"par":7,"depth":2,"feda":false},{"board":[[1,0,0],[0,-3,2],[1,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[-2,3,-1],[-1,0,0],[0,-1,0]],"par":8,"depth":3,"feda":false},{"board":[[-1,0,-2],[1,-1,2],[0,2,-1]],"par":7,"depth":3,"feda":false},{"board":[[3,-1,1],[2,1,0],[1,1,0]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,-2],[-1,-1,1],[-1,0,2]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,1],[1,2,0],[0,-2,1]],"par":5,"depth":1,"feda":false},{"board":[[2,0,-3],[1,0,-1],[-1,1,1]],"par":6,"depth":2,"feda":false},{"board":[[1,2,-2],[0,1,0],[1,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,0,-1],[-1,2,3],[1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[2,-1,1],[-2,1,-2],[1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[0,-2,1],[-1,-1,1],[2,-1,-1]],"par":7,"depth":4,"feda":false},{"board":[[1,1,0],[2,1,0],[1,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[2,1,2],[0,1,-1],[1,0,2]],"par":5,"depth":1,"feda":false},{"board":[[1,1,1],[0,-1,3],[1,1,0]],"par":7,"depth":2,"feda":false},{"board":[[-1,0,-1],[1,-1,2],[0,-1,2]],"par":6,"depth":2,"feda":false},{"board":[[2,-1,-3],[0,0,1],[1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-2],[1,0,-1],[1,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[3,-2,1],[1,-1,1],[-1,0,0]],"par":6,"depth":3,"feda":true},{"board":[[0,1,1],[1,3,1],[1,1,0]],"par":5,"depth":1,"feda":false},{"board":[[1,-2,0],[0,0,1],[1,-3,1]],"par":5,"depth":1,"feda":false},{"board":[[1,-2,2],[0,1,0],[-1,-2,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,0,1],[-2,1,0],[1,-1,3]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,1],[0,-1,2],[2,-1,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-2],[0,-2,3],[-1,1,0]],"par":8,"depth":4,"feda":false},{"board":[[-1,1,0],[1,2,-1],[1,-2,0]],"par":7,"depth":4,"feda":false},{"board":[[0,-3,1],[0,1,0],[1,-2,2]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[3,2,-1],[1,-1,1]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,0],[0,-1,2],[0,1,-3]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,1],[0,1,0],[1,-2,-2]],"par":5,"depth":2,"feda":false},{"board":[[-1,2,-1],[1,1,-1],[2,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[0,1,1],[0,1,2],[1,-2,2]],"par":7,"depth":4,"feda":true},{"board":[[-1,3,0],[0,1,1],[1,-1,1]],"par":6,"depth":4,"feda":true},{"board":[[1,0,-1],[1,-1,-1],[0,-2,1]],"par":5,"depth":1,"feda":false},{"board":[[-3,2,-1],[1,0,0],[1,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[1,2,0],[-2,-1,-1],[-1,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[0,0,1],[-1,2,-2],[-1,1,0]],"par":5,"depth":3,"feda":false},{"board":[[0,-1,1],[0,1,-2],[1,3,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,-1],[1,-3,0],[-1,0,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,1,3],[0,1,-2],[0,-1,1]],"par":8,"depth":4,"feda":true},{"board":[[0,-1,3],[1,-1,1],[0,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,-2,1],[0,1,-1],[-1,0,0]],"par":6,"depth":1,"feda":false},{"board":[[2,1,-1],[0,2,-3],[-1,0,0]],"par":7,"depth":2,"feda":false},{"board":[[-1,1,1],[-1,2,0],[0,-2,1]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,0],[-1,2,2],[1,0,1]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,2],[-1,1,0],[1,0,-3]],"par":7,"depth":3,"feda":false},{"board":[[-1,1,0],[0,1,-2],[-2,0,3]],"par":7,"depth":4,"feda":true},{"board":[[-1,1,1],[-1,2,1],[0,2,1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,0],[-1,0,-1],[1,1,3]],"par":5,"depth":1,"feda":false},{"board":[[1,0,-2],[-1,-1,0],[1,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,1],[-3,1,0],[-2,1,0]],"par":6,"depth":2,"feda":false},{"board":[[-1,-2,2],[2,0,-1],[-1,1,0]],"par":6,"depth":3,"feda":false},{"board":[[2,0,-1],[-1,2,0],[2,-1,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-1],[3,-2,-2],[0,-1,0]],"par":7,"depth":5,"feda":true},{"board":[[0,-1,-1],[0,0,-1],[1,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,0],[-2,1,-1],[1,-1,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,1,-3],[-1,0,1],[-1,1,0]],"par":7,"depth":2,"feda":false},{"board":[[2,0,1],[1,-1,1],[1,2,-1]],"par":7,"depth":2,"feda":false},{"board":[[-1,2,-1],[-1,2,0],[0,1,-2]],"par":7,"depth":3,"feda":false},{"board":[[-2,1,0],[-1,0,0],[2,2,1]],"par":7,"depth":3,"feda":false},{"board":[[2,0,1],[-3,2,-1],[0,-1,0]],"par":6,"depth":3,"feda":true},{"board":[[1,0,-1],[1,-1,0],[2,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-1],[3,-1,-1],[0,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,-2,2],[0,1,0],[0,3,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,1,1],[-1,0,0],[1,-2,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,1],[1,2,0],[-2,0,-3]],"par":7,"depth":3,"feda":false},{"board":[[2,-1,0],[0,0,-1],[-3,1,2]],"par":7,"depth":4,"feda":false},{"board":[[0,-2,1],[-1,2,2],[0,1,-1]],"par":8,"depth":5,"feda":true},{"board":[[1,0,-2],[0,0,1],[0,-1,1]],"par":4,"depth":1,"feda":false},{"board":[[-1,-1,0],[0,2,-1],[1,-2,2]],"par":6,"depth":1,"feda":false},{"board":[[-1,-3,0],[1,2,1],[0,0,1]],"par":5,"depth":2,"feda":false},{"board":[[2,-1,1],[1,-1,1],[-2,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[-3,1,0],[-2,0,-1],[0,1,2]],"par":7,"depth":3,"feda":false},{"board":[[2,-3,1],[0,-2,1],[-1,0,0]],"par":7,"depth":3,"feda":false},{"board":[[0,0,-1],[-1,-2,2],[0,1,3]],"par":9,"depth":4,"feda":true},{"board":[[-1,0,1],[2,-1,-2],[1,0,0]],"par":5,"depth":1,"feda":false},{"board":[[0,1,0],[0,-1,1],[1,2,0]],"par":5,"depth":1,"feda":false},{"board":[[1,0,-1],[1,-1,1],[-1,1,-2]],"par":6,"depth":2,"feda":false},{"board":[[1,1,1],[0,1,-1],[2,0,3]],"par":6,"depth":2,"feda":false},{"board":[[1,-1,0],[0,1,0],[3,3,1]],"par":6,"depth":3,"feda":false},{"board":[[0,0,-1],[-3,1,2],[1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[1,-1,-1],[-1,-1,0],[2,1,-1]],"par":6,"depth":4,"feda":false},{"board":[[0,1,-3],[1,-1,0],[-1,1,1]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,0],[1,2,0],[1,3,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,-1],[-2,3,0],[0,1,1]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,1],[-2,0,1],[1,0,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,-2,0],[0,3,2],[1,0,1]],"par":7,"depth":3,"feda":true},{"board":[[-1,2,-2],[1,0,-1],[-2,1,0]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,-1],[-1,1,0],[1,-2,0]],"par":6,"depth":3,"feda":true},{"board":[[1,0,1],[0,0,1],[-3,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,-1],[0,1,-1],[1,-2,2]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,0],[-1,0,0],[3,3,1]],"par":7,"depth":2,"feda":false},{"board":[[0,1,-1],[-3,0,-2],[2,1,0]],"par":7,"depth":2,"feda":false},{"board":[[0,0,-1],[1,0,1],[3,-1,-2]],"par":8,"depth":3,"feda":false},{"board":[[1,2,2],[0,0,-1],[0,1,-2]],"par":7,"depth":3,"feda":false},{"board":[[1,1,-2],[1,0,0],[0,-2,3]],"par":6,"depth":4,"feda":false},{"board":[[1,0,2],[1,2,-1],[1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[-1,1,1],[1,2,3]],"par":5,"depth":1,"feda":false},{"board":[[-3,1,0],[0,1,2],[2,0,1]],"par":7,"depth":2,"feda":false},{"board":[[-2,3,0],[1,-2,1],[0,0,1]],"par":6,"depth":3,"feda":false},{"board":[[1,0,-2],[1,-1,0],[2,-2,-1]],"par":6,"depth":3,"feda":false},{"board":[[-1,0,1],[-2,1,-1],[2,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[2,-1,-2],[1,0,-1],[-2,0,1]],"par":6,"depth":4,"feda":true},{"board":[[1,0,0],[-2,-1,2],[-2,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[0,1,2],[-1,1,1],[-2,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,2,1],[0,1,0],[2,0,-3]],"par":7,"depth":2,"feda":false},{"board":[[0,1,-2],[1,0,-1],[2,-2,1]],"par":7,"depth":2,"feda":false},{"board":[[1,0,1],[-2,1,0],[2,-2,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,0,-1],[-3,-1,0],[2,1,2]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,3],[-1,0,-2],[-1,-1,0]],"par":7,"depth":4,"feda":false},{"board":[[-1,0,-1],[-3,1,0],[1,0,2]],"par":6,"depth":1,"feda":false},{"board":[[0,-2,3],[0,-1,2],[1,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,1],[-3,0,2],[0,-1,2]],"par":7,"depth":2,"feda":false},{"board":[[0,1,2],[-1,1,0],[2,-2,-1]],"par":6,"depth":2,"feda":false},{"board":[[-1,1,2],[-1,-2,0],[-1,-1,1]],"par":7,"depth":3,"feda":false},{"board":[[0,-1,2],[-1,1,-2],[0,-1,1]],"par":6,"depth":4,"feda":false},{"board":[[0,0,-1],[1,-2,3],[-1,1,-1]],"par":7,"depth":5,"feda":true},{"board":[[0,0,1],[-1,1,0],[3,-2,2]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,1],[-1,0,2],[-2,0,3]],"par":6,"depth":1,"feda":false},{"board":[[2,0,-1],[-1,1,0],[-1,-2,2]],"par":5,"depth":2,"feda":false},{"board":[[-1,1,-1],[1,-3,0],[0,1,1]],"par":7,"depth":2,"feda":false},{"board":[[-1,2,-1],[1,-1,0],[-2,0,1]],"par":7,"depth":3,"feda":false},{"board":[[1,-1,0],[-2,1,0],[2,2,-1]],"par":8,"depth":4,"feda":true},{"board":[[1,0,2],[1,0,1],[-1,1,3]],"par":7,"depth":4,"feda":true},{"board":[[0,-1,-2],[-1,0,3],[1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-3,0],[0,1,-2],[0,0,1]],"par":5,"depth":1,"feda":false},{"board":[[0,-2,1],[1,-1,1],[3,0,1]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,-2],[0,1,0],[1,3,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,2,-1],[-1,-2,1],[1,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[0,-2,-1],[2,3,1],[-1,0,0]],"par":7,"depth":4,"feda":false},{"board":[[1,-1,1],[0,2,-3],[1,0,0]],"par":6,"depth":4,"feda":true},{"board":[[-1,1,-1],[1,1,0],[2,-1,2]],"par":5,"depth":1,"feda":false},{"board":[[-1,1,0],[-2,1,0],[0,1,-1]],"par":5,"depth":1,"feda":false},{"board":[[-1,0,-2],[0,1,3],[2,-1,0]],"par":7,"depth":2,"feda":false},{"board":[[0,2,1],[1,2,1],[1,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,-1,1],[0,-1,2],[-2,0,1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-1],[3,1,0],[1,1,1]],"par":6,"depth":3,"feda":true},{"board":[[-1,-1,2],[-1,0,2],[0,-2,-1]],"par":7,"depth":4,"feda":false},{"board":[[0,1,-2],[0,1,-1],[1,-1,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,1],[-2,-1,-1],[1,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[0,2,1],[-2,1,-1],[-1,-1,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,1],[0,0,1],[-2,1,-1]],"par":5,"depth":2,"feda":false},{"board":[[2,1,-2],[0,0,-1],[1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[1,2,-2],[0,0,-1],[1,1,0]],"par":6,"depth":4,"feda":false},{"board":[[-1,1,-2],[-1,2,0],[0,1,1]],"par":6,"depth":4,"feda":true},{"board":[[1,-1,1],[-1,-1,0],[1,0,1]],"par":5,"depth":1,"feda":false},{"board":[[0,1,1],[-1,3,1],[-1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,1],[0,1,-1],[-2,-3,0]],"par":7,"depth":2,"feda":false},{"board":[[0,1,0],[-2,-1,-1],[1,3,1]],"par":7,"depth":2,"feda":false},{"board":[[1,1,1],[-1,-1,0],[-1,0,-3]],"par":7,"depth":3,"feda":false},{"board":[[2,1,2],[1,0,-1],[-2,0,1]],"par":7,"depth":4,"feda":true},{"board":[[3,1,-1],[-2,1,0],[-1,1,0]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,2],[1,1,1],[0,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-2],[1,-1,-1],[1,0,-1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,0],[-3,1,-1],[1,2,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,0,1],[-2,1,2],[-1,0,-2]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,3],[-1,1,2],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,1],[3,2,-1],[-1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[-1,0,2],[0,1,-1],[1,-2,-1]],"par":7,"depth":5,"feda":true},{"board":[[1,0,0],[1,-1,-1],[2,-1,0]],"par":5,"depth":1,"feda":false},{"board":[[1,-3,0],[0,1,2],[0,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-1,-2,0],[1,1,-1],[1,2,1]],"par":5,"depth":2,"feda":false},{"board":[[0,1,0],[1,2,-2],[-1,2,1]],"par":7,"depth":2,"feda":false},{"board":[[-1,-1,1],[0,0,1],[-2,-1,3]],"par":6,"depth":3,"feda":true},{"board":[[-1,1,-1],[1,0,-2],[-2,1,0]],"par":7,"depth":3,"feda":false},{"board":[[3,-1,-1],[1,-1,-2],[1,0,0]],"par":7,"depth":4,"feda":false},{"board":[[-1,0,-1],[1,1,0],[-1,-2,2]],"par":6,"depth":1,"feda":false},{"board":[[1,0,1],[2,2,1],[0,-1,1]],"par":5,"depth":1,"feda":false},{"board":[[-1,1,1],[2,1,0],[0,2,1]],"par":6,"depth":2,"feda":false},{"board":[[-3,-1,2],[1,0,0],[1,0,-1]],"par":7,"depth":2,"feda":false},{"board":[[-1,-2,2],[-1,1,0],[1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[0,-1,1],[1,1,-3],[0,1,-2]],"par":7,"depth":3,"feda":false},{"board":[[1,2,0],[-1,3,1],[1,1,0]],"par":7,"depth":4,"feda":true},{"board":[[0,2,1],[0,1,0],[-1,1,1]],"par":4,"depth":1,"feda":false},{"board":[[2,1,0],[2,-1,1],[1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,-1],[2,-1,-1],[-1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[1,2,1],[-1,0,0],[1,-3,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,-2,2],[0,0,1],[0,-1,-1]],"par":6,"depth":3,"feda":false},{"board":[[1,2,2],[0,-2,1],[0,-1,0]],"par":7,"depth":3,"feda":false},{"board":[[1,1,-1],[1,0,0],[0,-3,2]],"par":6,"depth":4,"feda":true},{"board":[[-2,-2,1],[0,1,-1],[1,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-2,3,0],[-1,1,0],[1,1,1]],"par":6,"depth":1,"feda":false},{"board":[[0,1,2],[1,1,1],[2,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,3,-1],[-1,1,0],[0,-1,0]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,1],[-1,0,0],[0,-2,3]],"par":6,"depth":3,"feda":false},{"board":[[1,0,-3],[-1,1,1],[0,-1,1]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,-2],[-1,2,0],[0,-1,1]],"par":7,"depth":4,"feda":true},{"board":[[-1,1,2],[0,2,1],[0,-1,-1]],"par":6,"depth":1,"feda":false},{"board":[[-3,1,0],[-2,1,0],[1,0,1]],"par":5,"depth":1,"feda":false},{"board":[[1,1,-1],[-1,0,-1],[-1,-1,0]],"par":5,"depth":2,"feda":false},{"board":[[1,0,0],[0,-3,1],[1,2,-1]],"par":6,"depth":2,"feda":false},{"board":[[2,-2,1],[0,-1,1],[-1,0,0]],"par":6,"depth":3,"feda":false},{"board":[[1,-1,1],[-2,1,2],[0,0,-1]],"par":7,"depth":4,"feda":false},{"board":[[0,1,2],[1,-2,-1],[1,0,2]],"par":7,"depth":4,"feda":false},{"board":[[-1,1,0],[2,1,1],[-1,0,0]],"par":6,"depth":1,"feda":false},{"board":[[0,0,-1],[-1,2,2],[0,1,1]],"par":6,"depth":1,"feda":false},{"board":[[2,-1,0],[-2,0,-1],[1,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[1,-2,-1],[-1,1,1],[0,2,-1]],"par":7,"depth":2,"feda":false},{"board":[[-3,1,0],[-1,1,1],[0,1,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,-2,1],[1,2,0],[0,-1,2]],"par":6,"depth":3,"feda":false},{"board":[[2,-3,-1],[0,2,1],[-1,0,0]],"par":6,"depth":3,"feda":true},{"board":[[1,1,1],[1,2,3],[-1,0,0]],"par":6,"depth":1,"feda":false},{"board":[[0,1,-2],[-1,-1,-1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[1,1,-3],[1,1,-2],[0,1,0]],"par":6,"depth":2,"feda":false},{"board":[[2,3,0],[0,2,1],[-1,0,1]],"par":5,"depth":2,"feda":false},{"board":[[0,-1,-1],[-1,2,-1],[0,2,1]],"par":6,"depth":3,"feda":false},{"board":[[0,-2,-1],[1,0,-1],[1,3,1]],"par":6,"depth":3,"feda":false},{"board":[[0,1,1],[1,3,-1],[0,2,1]],"par":7,"depth":4,"feda":true},{"board":[[1,0,1],[0,1,-1],[1,-1,3]],"par":4,"depth":1,"feda":false},{"board":[[-2,-1,1],[1,0,0],[-1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,1,-1],[-1,0,2],[-1,1,2]],"par":5,"depth":2,"feda":false},{"board":[[1,1,1],[-2,-1,0],[-1,1,2]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,0],[-1,1,1],[-3,0,2]],"par":6,"depth":3,"feda":true},{"board":[[3,-1,-2],[0,0,1],[2,-1,0]],"par":6,"depth":3,"feda":true},{"board":[[0,0,1],[-1,-1,1],[-1,-2,3]],"par":6,"depth":3,"feda":true},{"board":[[3,0,-1],[2,1,0],[0,1,1]],"par":5,"depth":1,"feda":false},{"board":[[-2,3,0],[-1,1,0],[-1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[3,0,2],[-1,1,0],[-1,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,2,-3],[-1,1,-1],[0,-1,1]],"par":7,"depth":2,"feda":false},{"board":[[-3,-2,0],[2,0,1],[0,1,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,1,0],[-2,1,2],[-2,0,1]],"par":6,"depth":3,"feda":false},{"board":[[1,1,-1],[2,0,-1],[-2,1,1]],"par":6,"depth":4,"feda":false},{"board":[[-3,-2,-1],[0,0,1],[2,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[2,1,0],[-2,1,1]],"par":5,"depth":1,"feda":false},{"board":[[-1,0,1],[1,1,1],[1,1,0]],"par":5,"depth":2,"feda":false},{"board":[[-1,1,2],[1,1,-1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[-1,2,0],[2,-1,-1],[2,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[2,-2,1],[2,1,0],[1,1,0]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,1],[0,-1,3],[-1,0,1]],"par":6,"depth":4,"feda":true},{"board":[[3,-1,1],[1,0,1],[2,0,1]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,-2],[1,-1,1],[-1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[-2,3,-1],[0,0,-1],[-1,1,1]],"par":7,"depth":2,"feda":false},{"board":[[1,2,1],[-2,-3,0],[0,0,1]],"par":5,"depth":2,"feda":false},{"board":[[-1,-1,0],[2,0,-1],[2,-1,-1]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,0],[1,0,-1],[2,-3,-1]],"par":7,"depth":3,"feda":false},{"board":[[3,2,0],[0,0,-1],[-2,-1,1]],"par":6,"depth":4,"feda":false},{"board":[[1,0,1],[-2,-1,0],[1,0,0]],"par":5,"depth":1,"feda":false},{"board":[[-3,1,-2],[1,-1,1],[0,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,0],[-1,0,1],[0,2,-3]],"par":7,"depth":2,"feda":false},{"board":[[1,-3,0],[0,1,1],[-1,1,-1]],"par":7,"depth":2,"feda":false},{"board":[[0,-1,0],[1,-1,0],[-2,-2,1]],"par":6,"depth":3,"feda":false},{"board":[[0,0,1],[1,2,1],[-1,-3,0]],"par":6,"depth":3,"feda":false},{"board":[[0,2,-1],[-2,3,-1],[1,0,0]],"par":6,"depth":3,"feda":true},{"board":[[1,-1,1],[0,0,1],[0,-1,0]],"par":4,"depth":1,"feda":false},{"board":[[0,-2,1],[-1,1,-1],[1,2,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,0,-1],[-2,3,0],[0,2,-1]],"par":7,"depth":2,"feda":false},{"board":[[3,0,2],[-2,1,-1],[0,1,0]],"par":6,"depth":2,"feda":false},{"board":[[1,1,1],[-1,-3,0],[-1,0,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,-3,-1],[1,0,1],[1,-2,0]],"par":6,"depth":3,"feda":false},{"board":[[-1,1,-1],[-1,-2,1],[2,0,1]],"par":7,"depth":4,"feda":false},{"board":[[1,0,-1],[0,1,3],[1,1,1]],"par":6,"depth":1,"feda":false},{"board":[[1,0,1],[0,-1,-1],[-1,1,1]],"par":5,"depth":1,"feda":false},{"board":[[1,-1,1],[-1,0,-2],[0,1,2]],"par":6,"depth":2,"feda":false},{"board":[[2,0,-1],[-2,-1,1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[3,-2,1],[2,0,1],[0,-1,0]],"par":6,"depth":3,"feda":true},{"board":[[0,-1,3],[1,0,0],[-1,-1,2]],"par":6,"depth":3,"feda":false},{"board":[[-1,-1,3],[0,0,1],[-1,0,-1]],"par":7,"depth":3,"feda":true},{"board":[[2,0,1],[-1,0,-1],[1,1,3]],"par":6,"depth":1,"feda":false},{"board":[[-2,0,-1],[-1,0,0],[-1,1,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-2,-1],[1,-1,-1],[2,0,-1]],"par":6,"depth":2,"feda":false},{"board":[[0,0,1],[-1,1,1],[1,-2,2]],"par":6,"depth":2,"feda":false},{"board":[[1,3,-3],[0,0,1],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[0,1,1],[1,0,-1],[-2,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[-1,-1,1],[-1,1,2],[0,-1,-1]],"par":6,"depth":4,"feda":false},{"board":[[0,1,3],[1,0,-1],[0,1,2]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,-1],[-1,1,-1],[2,1,1]],"par":5,"depth":1,"feda":false},{"board":[[1,-3,-1],[1,-1,0],[0,-1,0]],"par":6,"depth":2,"feda":false},{"board":[[1,1,-2],[-2,0,1],[-2,1,0]],"par":7,"depth":2,"feda":false},{"board":[[-1,0,2],[-2,-1,0],[2,1,-1]],"par":7,"depth":3,"feda":false},{"board":[[2,1,0],[-1,0,-1],[0,-1,3]],"par":6,"depth":3,"feda":false},{"board":[[0,-2,1],[-1,3,1],[0,1,-1]],"par":8,"depth":5,"feda":true},{"board":[[-1,1,-1],[2,-1,2],[0,1,-1]],"par":6,"depth":1,"feda":false},{"board":[[0,0,-1],[-1,0,1],[-1,-1,2]],"par":6,"depth":1,"feda":false},{"board":[[-3,0,1],[1,1,0],[2,0,-1]],"par":6,"depth":2,"feda":false},{"board":[[1,2,1],[0,-2,-1],[-1,-1,0]],"par":5,"depth":2,"feda":false},{"board":[[3,1,-2],[-1,0,0],[0,1,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-1],[0,-2,-1],[1,3,1]],"par":6,"depth":3,"feda":false},{"board":[[0,0,-1],[3,2,0],[-2,-1,1]],"par":6,"depth":4,"feda":false},{"board":[[3,-1,-1],[0,1,-1],[1,0,-1]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,-1],[0,-1,1],[2,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[-1,1,0],[2,-3,0],[-1,0,-1]],"par":7,"depth":2,"feda":false},{"board":[[1,0,1],[0,2,-3],[1,1,0]],"par":6,"depth":2,"feda":false},{"board":[[0,0,-1],[1,-1,0],[1,-2,3]],"par":7,"depth":3,"feda":false},{"board":[[2,1,0],[-2,0,1],[1,-1,-1]],"par":6,"depth":3,"feda":false},{"board":[[-1,1,1],[-2,3,1],[0,-1,0]],"par":6,"depth":3,"feda":true},{"board":[[2,-1,0],[1,0,1],[1,0,2]],"par":5,"depth":1,"feda":false},{"board":[[0,0,1],[-1,0,-1],[2,1,0]],"par":5,"depth":1,"feda":false},{"board":[[0,-1,1],[1,0,-2],[1,-2,1]],"par":7,"depth":2,"feda":false},{"board":[[1,-1,2],[1,1,1],[1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,0],[2,1,-1],[3,-1,-1]],"par":7,"depth":3,"feda":false},{"board":[[1,2,-2],[-1,-1,-1],[1,1,0]],"par":7,"depth":3,"feda":false},{"board":[[0,0,-1],[-1,-1,1],[1,2,-2]],"par":6,"depth":4,"feda":false},{"board":[[0,0,1],[1,-1,0],[2,-1,0]],"par":4,"depth":1,"feda":false},{"board":[[0,1,0],[1,-2,0],[3,-2,1]],"par":6,"depth":1,"feda":false},{"board":[[0,1,-2],[-2,0,1],[1,-1,2]],"par":6,"depth":2,"feda":false},{"board":[[2,-1,-1],[-1,1,-1],[0,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[0,-1,1],[1,0,-3],[1,-2,0]],"par":8,"depth":3,"feda":false},{"board":[[0,-1,1],[-2,0,-1],[-1,-1,1]],"par":6,"depth":3,"feda":false},{"board":[[0,1,2],[2,-1,-3],[-1,0,0]],"par":7,"depth":4,"feda":true},{"board":[[1,-1,1],[-1,-2,1],[-1,0,0]],"par":6,"depth":1,"feda":false},{"board":[[0,1,0],[2,-1,1],[-1,2,0]],"par":6,"depth":1,"feda":false},{"board":[[2,1,-1],[2,0,-1],[-1,-1,1]],"par":5,"depth":2,"feda":false},{"board":[[1,1,1],[-3,-1,0],[-1,0,1]],"par":6,"depth":2,"feda":false},{"board":[[1,1,-2],[2,0,-1],[0,-1,2]],"par":6,"depth":3,"feda":false},{"board":[[0,-1,0],[1,0,1],[-2,2,-1]],"par":6,"depth":3,"feda":false},{"board":[[3,0,-2],[-2,1,1],[0,1,0]],"par":6,"depth":4,"feda":false},{"board":[[2,-1,0],[0,2,1],[-1,0,0]],"par":6,"depth":1,"feda":false},{"board":[[0,-1,-2],[-1,0,1],[-1,0,2]],"par":6,"depth":2,"feda":false},{"board":[[2,0,-3],[0,1,0],[1,-1,-2]],"par":5,"depth":2,"feda":false},{"board":[[1,0,1],[-1,-2,2],[2,1,0]],"par":7,"depth":3,"feda":false},{"board":[[2,-1,0],[2,-1,-1],[1,0,-2]],"par":7,"depth":3,"feda":false},{"board":[[0,1,-1],[0,1,-2],[1,-2,1]],"par":6,"depth":3,"feda":false},{"board":[[0,2,1],[-2,3,1],[-1,0,0]],"par":6,"depth":3,"feda":true},{"board":[[2,-2,-1],[0,1,0],[-1,0,1]],"par":4,"depth":1,"feda":false},{"board":[[1,0,2],[-2,-1,1],[0,0,1]],"par":6,"depth":1,"feda":false},{"board":[[2,0,1],[3,1,0],[0,-1,1]],"par":6,"depth":2,"feda":false},{"board":[[0,-1,1],[-1,-1,2],[0,1,-2]],"par":7,"depth":2,"feda":false},{"board":[[-1,1,3],[1,0,-1],[-2,0,1]],"par":7,"depth":3,"feda":false},{"board":[[0,-1,-1],[0,0,1],[1,-2,2]],"par":7,"depth":3,"feda":false},{"board":[[2,-2,1],[1,0,-1],[0,1,-1]],"par":6,"depth":4,"feda":false},{"board":[[1,0,1],[3,1,1],[-1,0,0]],"par":5,"depth":1,"feda":false},{"board":[[0,0,1],[-2,-1,0],[3,2,1]],"par":6,"depth":1,"feda":false},{"board":[[1,3,1],[0,1,0],[-2,-1,-1]],"par":6,"depth":2,"feda":false},{"board":[[3,-1,0],[0,0,-1],[2,-1,2]],"par":7,"depth":2,"feda":false},{"board":[[1,-3,3],[0,0,1],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[1,0,-1],[0,-3,1],[-1,-1,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,1,-1],[-2,3,-1],[0,1,0]],"par":6,"depth":3,"feda":true},{"board":[[1,1,1],[-1,0,0],[1,-1,-2]],"par":6,"depth":1,"feda":false},{"board":[[-1,0,1],[0,-1,-1],[-3,0,2]],"par":6,"depth":1,"feda":false},{"board":[[-1,2,0],[0,1,1],[1,0,1]],"par":5,"depth":2,"feda":false},{"board":[[1,1,2],[1,-1,1],[-1,2,0]],"par":6,"depth":2,"feda":false},{"board":[[1,-1,0],[-2,0,1],[2,1,-2]],"par":7,"depth":3,"feda":false},{"board":[[3,0,-2],[1,1,-1],[0,-1,0]],"par":6,"depth":3,"feda":false},{"board":[[-2,0,3],[0,1,2],[1,1,0]],"par":7,"depth":4,"feda":false},{"board":[[1,0,-2],[1,1,1],[1,0,-3]],"par":6,"depth":1,"feda":false},{"board":[[1,0,0],[1,-2,-1],[0,-1,-1]],"par":5,"depth":1,"feda":false},{"board":[[1,-1,0],[3,0,1],[-1,0,0]],"par":6,"depth":2,"feda":false},{"board":[[3,0,1],[0,1,1],[1,1,1]],"par":6,"depth":2,"feda":false},{"board":[[-3,0,-1],[0,2,-1],[2,1,0]],"par":7,"depth":3,"feda":false},{"board":[[-1,0,-1],[0,-3,-1],[1,1,1]],"par":7,"depth":3,"feda":false},{"board":[[1,0,-2],[-1,0,1],[2,1,2]],"par":7,"depth":4,"feda":true},{"board":[[1,0,-1],[0,-2,1],[1,-3,0]],"par":6,"depth":1,"feda":false},{"board":[[1,-2,-1],[-1,1,1],[-1,0,2]],"par":6,"depth":1,"feda":false},{"board":[[1,-1,0],[1,0,2],[-2,1,-1]],"par":6,"depth":2,"feda":false},{"board":[[2,0,-1],[1,-1,0],[2,-3,0]],"par":7,"depth":2,"feda":false},{"board":[[1,3,3],[0,0,1],[0,-1,1]],"par":7,"depth":3,"feda":false},{"board":[[-1,1,0],[-1,1,-1],[0,1,-2]],"par":6,"depth":3,"feda":false},{"board":[[0,1,-2],[-1,0,0],[-1,-2,3]],"par":7,"depth":5,"feda":false},{"board":[[1,0,-1],[-3,1,2],[0,0,-1]],"par":5,"depth":1,"feda":false},{"board":[[1,0,-1],[0,-2,1],[0,-3,2]],"par":5,"depth":1,"feda":false},{"board":[[1,1,-2],[0,-1,2],[1,-1,1]],"par":5,"depth":2,"feda":false},{"board":[[0,-1,1],[1,1,0],[0,-2,1]],"par":5,"depth":2,"feda":false},{"board":[[1,0,-2],[2,-1,0],[1,-1,1]],"par":7,"depth":3,"feda":false}]};</script>
+<script>
+/* Asris — çekirdek oyun mantığı (saf, arayüzden bağımsız) */
+(function (A) {
+  'use strict';
+  const B = 3; // hücre sınırı: bir hücrede en fazla 3 nokta
+
+  function clone(b) { return b.map(r => r.slice()); }
+  function identity(n) { return Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))); }
+  function equal(a, b) { return a.length === b.length && a.every((r, i) => r.every((v, j) => v === b[i][j])); }
+  function isSolved(b) { return equal(b, identity(b.length)); }
+  function inBounds(b) { return b.every(r => r.every(v => v >= -B && v <= B)); }
+  // Köşegen hedefinden uzaklık: yanlış yerdeki nokta sayısı
+  function wrongDots(b) {
+    let s = 0;
+    for (let i = 0; i < b.length; i++) for (let j = 0; j < b.length; j++) s += Math.abs(b[i][j] - (i === j ? 1 : 0));
+    return s;
+  }
+  function dots(b) { let s = 0; for (const r of b) for (const v of r) s += Math.abs(v); return s; }
+
+  // Hamle: {t:'swap'|'add'|'sub'|'neg', i, j}  (i = kaynak, j = hedef; neg için i)
+  function apply(b, m) {
+    const r = clone(b);
+    if (m.t === 'swap') { const x = r[m.i]; r[m.i] = r[m.j]; r[m.j] = x; }
+    else if (m.t === 'add') { r[m.j] = r[m.j].map((v, k) => v + r[m.i][k]); }
+    else if (m.t === 'sub') { r[m.j] = r[m.j].map((v, k) => v - r[m.i][k]); }
+    else if (m.t === 'neg') { r[m.i] = r[m.i].map(v => -v); }
+    return inBounds(r) ? r : null;
+  }
+  function allMoves(n) {
+    const out = [];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) out.push({ t: 'swap', i, j });
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) { out.push({ t: 'add', i, j }); out.push({ t: 'sub', i, j }); }
+    for (let i = 0; i < n; i++) out.push({ t: 'neg', i, j: i });
+    return out;
+  }
+  // Kod: taban-7, hücre sırası satır-satır, ağırlık 7^k (analiz betikleriyle aynı)
+  function encode(b) {
+    let c = 0, w = 1;
+    for (let i = 0; i < b.length; i++) for (let j = 0; j < b.length; j++) { c += (b[i][j] + B) * w; w *= 7; }
+    return c;
+  }
+  function decode(c, n) {
+    const b = identity(n);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { b[i][j] = (c % 7) - B; c = Math.floor(c / 7); }
+    return b;
+  }
+  // Metin hamle kodu ("sub23" = R3 ← R3 − R2, "swap12", "neg1") ↔ nesne
+  function parseMove(s) {
+    const t = s.replace(/[0-9]/g, '');
+    const a = +s[s.length - 2] - 1, c = +s[s.length - 1] - 1;
+    return t === 'neg' ? { t, i: c, j: c } : { t, i: a, j: c };
+  }
+  function moveKey(m) { return m.t === 'neg' ? `neg${m.i + 1}${m.i + 1}` : `${m.t}${m.i + 1}${m.j + 1}`; }
+  function inverseMove(m) { return m.t === 'add' ? { t: 'sub', i: m.i, j: m.j } : m.t === 'sub' ? { t: 'add', i: m.i, j: m.j } : m; }
+
+  // 2×2 için mesafe tablosu: 232 durum, açılışta BFS
+  const small = new Map();
+  (function bfs2() {
+    const I = identity(2); const q = [I]; small.set(encode(I), 0);
+    const moves = allMoves(2);
+    for (let h = 0; h < q.length; h++) {
+      const b = q[h], d = small.get(encode(b));
+      for (const m of moves) { const nb = apply(b, m); if (!nb) continue; const c = encode(nb); if (!small.has(c)) { small.set(c, d + 1); q.push(nb); } }
+    }
+  })();
+
+  A.core = { B, clone, identity, equal, isSolved, inBounds, wrongDots, dots, apply, allMoves, encode, decode, parseMove, moveKey, inverseMove, small };
+})(window.Asris = window.Asris || {});
+
+/* Asris — mesafe tablosu (3×3) ve en iyi hamle arama */
+(function (A) {
+  'use strict';
+  const C = A.core;
+  let codes = null, nib = null, loading = null, failed = false;
+  const listeners = [];
+
+  function decodeTable(buf) {
+    const u8 = new Uint8Array(buf);
+    if (String.fromCharCode(u8[0], u8[1], u8[2], u8[3]) !== 'ASR1') throw new Error('dist.bin: bilinmeyen biçim');
+    const count = u8[6] | (u8[7] << 8) | (u8[8] << 16) | (u8[9] << 24);
+    const arr = new Uint32Array(count);
+    let p = 11, c = 0;
+    for (let i = 0; i < count; i++) {
+      let g = 0, sh = 0, byte;
+      do { byte = u8[p++]; g |= (byte & 127) << sh; sh += 7; } while (byte & 128);
+      c += g; arr[i] = c;
+    }
+    const nibbles = u8.subarray(p, p + ((count + 1) >> 1));
+    if (nibbles.length !== ((count + 1) >> 1)) throw new Error('dist.bin: eksik veri');
+    codes = arr; nib = nibbles;
+  }
+  function load(url) {
+    if (codes) return Promise.resolve(true);
+    if (loading) return loading;
+    const u = url || A.config.distUrl, isText = /\.txt(\?|$)/.test(u);
+    loading = fetch(u).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return isText ? r.text().then(b64 => { const bin = atob(b64.replace(/\s+/g, '')); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out.buffer; }) : r.arrayBuffer(); })
+      .then(buf => { decodeTable(buf); failed = false; listeners.forEach(f => f(true)); return true; })
+      .catch(err => { console.warn('Mesafe tablosu yüklenemedi:', err); loading = null; failed = true; listeners.forEach(f => f(false)); return false; });
+    return loading;
+  }
+  function ready() { return !!codes; }
+  function lookup3(code) {
+    let lo = 0, hi = codes.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1, v = codes[mid];
+      if (v === code) return (nib[mid >> 1] >> ((mid & 1) * 4)) & 15;
+      if (v < code) lo = mid + 1; else hi = mid - 1;
+    }
+    return -1;
+  }
+  // Tahta → hedefe uzaklık (2×2 anında, 3×3 tablo yüklüyse), aksi halde null
+  function distance(b) {
+    const c = C.encode(b);
+    if (b.length === 2) { const d = C.small.get(c); return d === undefined ? -1 : d; }
+    if (!codes) return null;
+    return lookup3(c);
+  }
+  // En iyi hamleler: uzaklığı bir azaltanlar. Sıralama: damgalar önce (düşünülen hamle), sonra yer değiştirme, sonra çevirme.
+  function bestMoves(b) {
+    const d = distance(b);
+    if (d === null || d < 0) return null;
+    const out = [];
+    for (const m of C.allMoves(b.length)) {
+      const nb = C.apply(b, m); if (!nb) continue;
+      const nd = distance(nb); if (nd === d - 1) out.push(m);
+    }
+    const rank = { add: 0, sub: 0, swap: 1, neg: 2 };
+    out.sort((x, y) => rank[x.t] - rank[y.t]);
+    return { d, moves: out };
+  }
+  // Kalan en kısa çözüm (tam yol)
+  function solution(b) {
+    const path = []; let cur = b;
+    for (let guard = 0; guard < 40; guard++) {
+      if (C.isSolved(cur)) return path;
+      const r = bestMoves(cur); if (!r || !r.moves.length) return null;
+      path.push(r.moves[0]); cur = C.apply(cur, r.moves[0]);
+    }
+    return null;
+  }
+  function onLoad(f) { listeners.push(f); }
+  A.dist = { load, ready, distance, bestMoves, solution, onLoad, get failed() { return failed; } };
+})(window.Asris = window.Asris || {});
+
+/* Asris — metinler (TR / EN) */
+(function (A) {
+  'use strict';
+  const S = {
+    tr: {
+      appName: 'Asris', tagline: 'Sıraları kaydır, noktaları temizle.',
+      chooseLang: 'Dil / Language', continue: 'Devam et', start: 'Başla', campaign: 'Kampanya', daily: 'Günün Tahtası', settings: 'Ayarlar', help: 'Nasıl oynanır',
+      level: 'Bölüm', levelN: 'Bölüm {n}', moves: 'Hamle', par: 'Par', best: 'En iyi', locked: 'Kilitli', world1: 'Dünya 1 · Laboratuvar',
+      phase1: 'Evre 1 · Hareket', phase2: 'Evre 2 · Sayı', phase3: 'Evre 3 · Matris',
+      undo: 'Geri al', reset: 'Baştan', hint: 'İpucu', back: 'Geri', next: 'Sonraki bölüm', retry: 'Tekrar oyna', map: 'Harita', close: 'Kapat', ok: 'Tamam', cancel: 'Vazgeç',
+      solved: 'Tahta temizlendi', solvedPar: 'Par\'da çözdün', solvedUnder: 'Par\'ın altında çözdün!', watched: 'Çözüm izlendi', watchedNote: 'Yıldızlar, bölümü ipucusuz tekrar çözünce kazanılır.',
+      movesOf: '{m} hamle · par {p}', starsEarned: '{s} yıldız',
+      tacticTanitim: 'Tanıtım', tacticBariz: 'Bariz', tacticHazirlik: 'Hazırlık', tacticKombinasyon: 'Kombinasyon', tacticFeda: 'Feda',
+      tacticIntroHazirlik: 'Yeni kademe: Hazırlık. Bariz hamle yanlıştı; önce bir yardımcı sırayı temizlemek gerekti.',
+      tacticIntroKombinasyon: 'Yeni kademe: Kombinasyon. Birkaç hamlelik bir zinciri baştan görmek gerekti.',
+      tacticIntroFeda: 'Yeni kademe: Feda. En iyi hamle tahtayı önce kötüleştirdi, sonra açtı.',
+      tacticIntroBariz: 'Kademe: Bariz. En çok noktayı patlatan hamle doğruydu.',
+      yourMoves: 'Hamlelerin', moveWord: { swap: '{a}. ve {b}. sıraları yer değiştirdin', add: '{a}. sırayı {b}. sıraya damgaladın', sub: '{a}. sırayı {b}. sıraya ters damgaladın', neg: '{a}. sırayı çevirdin' },
+      moveShort: { swap: 'Yer değiştir', add: 'Damga', sub: 'Ters damga', neg: 'Çevir' },
+      rowOp: 'satır işlemi', rowSwap: 'satır değiştirme', rowNeg: 'satırı −1 ile çarpma',
+      hint1: 'Bu sıraya bak.', hint2: 'İşaretli hamleyi yap.', hint3: 'Çözüm oynatılıyor…', hintLoading: 'İpucu hazırlanıyor…', hintOffline: 'İpucu için bir kez internet bağlantısı gerekiyor.', hint3Confirm: 'Çözümün tamamı oynatılacak. Bu bölüm "çözüm izlendi" olarak işaretlenir; yıldızlar ipucusuz tekrar çözünce kazanılır.', hint3Go: 'Çözümü göster',
+      seenBefore: 'Bu tahtayı daha önce gördün.', driftingAway: 'Hedeften uzaklaşıyorsun; geri almayı dene.', stuckOffer: 'Takıldın mı? İpucu her zaman ücretsiz.',
+      limit: 'Bir hücrede en fazla 3 nokta olabilir.',
+      captionSwap: 'Alt sırayı tutup üst sıranın tutma çubuğuna bırak.', captionAdd: 'Alt sırayı üst sıranın + yarısına bırak.', captionSub: 'Alt sırayı üst sıranın − yarısına bırak.', captionNeg: 'Alt sıranın ± düğmesine dokun.',
+      numbersAppear: 'Noktalar artık sayı.', numbersAppearBody: 'Mavi nokta +1, kırmızı nokta −1. Bir hücrenin sayısı, noktalarının toplamı.',
+      matrixReveal: 'Bu bir matris.', matrixRevealBody: 'Baştan beri bir matris üzerinde oynuyordun. Her hamlen gerçek bir satır işlemi. Tahtayı nasıl görmek istersin?', viewDots: 'Noktalar', viewNumbers: 'Sayılar', viewMatrix: 'Matris', viewNote: 'Ayarlardan her zaman değiştirebilirsin.',
+      inverseReveal: 'Tersini oluşturdun.', inverseRevealBody: 'Oyun her hamleni arka planda bir birim matrise de uyguladı. Tahtayı temizlerken o matris, başlangıç tahtasının tersine dönüştü.', inverseLabel: 'Ters matris', startLabel: 'Başlangıç',
+      dailyTitle: 'Günün Tahtası', dailyN: 'Asris #{n}', dailyDone: 'Bugünün tahtasını çözdün.', dailyShare: 'Sonucu kopyala', dailyCopied: 'Kopyalandı', dailyStreak: '{n} günlük seri', dailyTomorrow: 'Yarın yeni tahta.', dailyGate: 'Günün Tahtası için önce hamleleri öğren: ilk 4 bölüm yaklaşık 2 dakika sürer.', dailyGateGo: 'Bölüm 1\'i oyna', dailyShareLine: '{name} #{n} · {m} hamle (par {p}) · {t} · {stars}', dailyPlayAgain: 'Tekrar oyna (sonuç değişmez)', dailyMovesLabel: 'Hamle', dailyTimeLabel: 'Süre', dailyBest: 'Bugünkü sonucun',
+      settingsLang: 'Dil', settingsView: 'Tahta görünümü', settingsNotation: 'Notasyonu göster', settingsNotationNote: 'Bölüm sonu kartında R₂ ← R₂ − R₁ gibi yazımlar ilk bölümden itibaren görünür.', settingsSound: 'Ses', settingsTheme: 'Tema', themeAuto: 'Sistem', themeDark: 'Koyu', themeLight: 'Açık', settingsInstall: 'Ana ekrana ekle', settingsInstallDesktop: 'Masaüstüne ekle', installBody: 'Asris\'i ana ekrana eklersen ilerlemen cihazında güvende kalır ve oyun internetsiz de açılır.', installIos: 'Safari\'de Paylaş düğmesine, sonra "Ana Ekrana Ekle"ye dokun.', installDesktopHelp: 'Tarayıcının adres çubuğundaki yükle simgesine tıkla ya da menüden "Uygulamayı yükle"yi seç.', installed: 'Yüklendi', installUnavailable: 'Bu tarayıcı yüklemeyi desteklemiyor; ilerlemen yine de bu cihazda saklanır.',
+      progressTitle: 'İlerleme kodu', progressBody: 'Kodu kopyalayıp başka bir cihazda yapıştırarak ilerlemeni taşıyabilirsin.', progressCopy: 'Kodu kopyala', progressPaste: 'Kod yapıştır', progressImport: 'İçe aktar', progressImported: 'İlerleme yüklendi', progressBad: 'Kod okunamadı', progressReset: 'İlerlemeyi sıfırla', progressResetConfirm: 'Tüm ilerleme silinecek. Emin misin?', yesReset: 'Evet, sıfırla',
+      about: 'Asris, satır işlemleriyle oynanan bir mantık bulmacası. Kurallar bir dakikada, ustalık zamanla.', version: 'Sürüm',
+      helpTitle: 'Dört hamle', helpSwap: 'Yer değiştir: bir sırayı tutup başka bir sıranın tutma çubuğuna bırak.', helpAdd: 'Damga: bir sırayı başka bir sıranın + yarısına bırak; noktaları eklenir.', helpSub: 'Ters damga: − yarısına bırak; noktaları renk değiştirerek eklenir.', helpNeg: 'Çevir: sıranın ± düğmesine dokun; tüm noktalar renk değiştirir.', helpPop: 'Aynı hücrede buluşan bir mavi ve bir kırmızı nokta birbirini yok eder.', helpGoal: 'Hedef: köşegendeki her hücrede tek mavi nokta, gerisi boş.', helpLimit: 'Bir hücrede en fazla 3 nokta olabilir.', helpKeys: 'Klavye: Ctrl+Z geri al · R baştan · H ipucu · 1-3 sıra seç, sonra + − S (yer değiştir) F (çevir)',
+      newTactic: 'Yeni kademe', stars: 'Yıldız', total: 'Toplam', done: 'Bitti', stepOf: 'Kalan {n} hamle',
+      offlineReady: 'Oyun çevrimdışı kullanıma hazır.', lang_tr: 'Türkçe', lang_en: 'English',
+      keyboardPick: 'Kaynak: {a}. sıra. Hedef sırayı seç (1-{n}), sonra + − S, ya da F ile çevir.', keyboardOp: 'Kaynak {a} → hedef {b}: + damga, − ters damga, S yer değiştir',
+      firstDailyHint: 'Her gün herkese aynı tahta. Ölçü hamle sayısı; süre sadece bilgi.', on: 'Açık', off: 'Kapalı', rules: 'Kurallar',
+    },
+    en: {
+      appName: 'Asris', tagline: 'Slide the rows, clear the dots.',
+      chooseLang: 'Dil / Language', continue: 'Continue', start: 'Start', campaign: 'Campaign', daily: 'Daily Board', settings: 'Settings', help: 'How to play',
+      level: 'Level', levelN: 'Level {n}', moves: 'Moves', par: 'Par', best: 'Best', locked: 'Locked', world1: 'World 1 · The Lab',
+      phase1: 'Phase 1 · Motion', phase2: 'Phase 2 · Numbers', phase3: 'Phase 3 · Matrix',
+      undo: 'Undo', reset: 'Restart', hint: 'Hint', back: 'Back', next: 'Next level', retry: 'Play again', map: 'Map', close: 'Close', ok: 'OK', cancel: 'Cancel',
+      solved: 'Board cleared', solvedPar: 'Solved at par', solvedUnder: 'Solved under par!', watched: 'Solution watched', watchedNote: 'Stars are earned when you solve the level again without hints.',
+      movesOf: '{m} moves · par {p}', starsEarned: '{s} stars',
+      tacticTanitim: 'Intro', tacticBariz: 'Direct', tacticHazirlik: 'Setup', tacticKombinasyon: 'Combination', tacticFeda: 'Sacrifice',
+      tacticIntroHazirlik: 'New tier: Setup. The obvious move was wrong; a helper row had to be cleaned first.',
+      tacticIntroKombinasyon: 'New tier: Combination. A chain of several moves had to be seen from the start.',
+      tacticIntroFeda: 'New tier: Sacrifice. The best move made the board worse before it opened up.',
+      tacticIntroBariz: 'Tier: Direct. The move that popped the most dots was the right one.',
+      yourMoves: 'Your moves', moveWord: { swap: 'You swapped rows {a} and {b}', add: 'You stamped row {a} onto row {b}', sub: 'You reverse-stamped row {a} onto row {b}', neg: 'You flipped row {a}' },
+      moveShort: { swap: 'Swap', add: 'Stamp', sub: 'Reverse stamp', neg: 'Flip' },
+      rowOp: 'row operation', rowSwap: 'row swap', rowNeg: 'multiplying a row by −1',
+      hint1: 'Look at this row.', hint2: 'Make the marked move.', hint3: 'Playing the solution…', hintLoading: 'Preparing hint…', hintOffline: 'Hints need an internet connection once.', hint3Confirm: 'The full solution will be played. This level will be marked "solution watched"; stars are earned when you solve it again without hints.', hint3Go: 'Show solution',
+      seenBefore: 'You have seen this board before.', driftingAway: 'You are moving away from the goal; try undo.', stuckOffer: 'Stuck? Hints are always free.',
+      limit: 'A cell can hold at most 3 dots.',
+      captionSwap: 'Grab the bottom row and drop it on the top row\'s handle.', captionAdd: 'Drop the bottom row on the + half of the top row.', captionSub: 'Drop the bottom row on the − half of the top row.', captionNeg: 'Tap the ± button of the bottom row.',
+      numbersAppear: 'The dots are numbers now.', numbersAppearBody: 'A blue dot is +1, a red dot is −1. A cell\'s number is the sum of its dots.',
+      matrixReveal: 'This is a matrix.', matrixRevealBody: 'You have been playing on a matrix all along. Every move you make is a real row operation. How would you like to see the board?', viewDots: 'Dots', viewNumbers: 'Numbers', viewMatrix: 'Matrix', viewNote: 'You can change this anytime in Settings.',
+      inverseReveal: 'You built the inverse.', inverseRevealBody: 'The game applied each of your moves to an identity matrix in the background. While you cleared the board, that matrix became the inverse of the starting board.', inverseLabel: 'Inverse matrix', startLabel: 'Start',
+      dailyTitle: 'Daily Board', dailyN: 'Asris #{n}', dailyDone: 'You solved today\'s board.', dailyShare: 'Copy result', dailyCopied: 'Copied', dailyStreak: '{n}-day streak', dailyTomorrow: 'New board tomorrow.', dailyGate: 'Learn the moves first: the first 4 levels take about 2 minutes.', dailyGateGo: 'Play level 1', dailyShareLine: '{name} #{n} · {m} moves (par {p}) · {t} · {stars}', dailyPlayAgain: 'Play again (result stays)', dailyMovesLabel: 'Moves', dailyTimeLabel: 'Time', dailyBest: 'Your result today',
+      settingsLang: 'Language', settingsView: 'Board view', settingsNotation: 'Show notation', settingsNotationNote: 'The end-of-level card shows R₂ ← R₂ − R₁ style notation from the first level.', settingsSound: 'Sound', settingsTheme: 'Theme', themeAuto: 'System', themeDark: 'Dark', themeLight: 'Light', settingsInstall: 'Add to home screen', settingsInstallDesktop: 'Add to desktop', installBody: 'Adding Asris to your home screen keeps your progress safe on this device and lets the game open offline.', installIos: 'In Safari, tap Share, then "Add to Home Screen".', installDesktopHelp: 'Click the install icon in your browser\'s address bar, or choose "Install app" from the menu.', installed: 'Installed', installUnavailable: 'This browser does not support installing; your progress is still saved on this device.',
+      progressTitle: 'Progress code', progressBody: 'Copy the code and paste it on another device to move your progress.', progressCopy: 'Copy code', progressPaste: 'Paste code', progressImport: 'Import', progressImported: 'Progress loaded', progressBad: 'Could not read the code', progressReset: 'Reset progress', progressResetConfirm: 'All progress will be deleted. Are you sure?', yesReset: 'Yes, reset',
+      about: 'Asris is a logic puzzle played with row operations. Rules in a minute, mastery over time.', version: 'Version',
+      helpTitle: 'Four moves', helpSwap: 'Swap: grab a row and drop it on another row\'s handle.', helpAdd: 'Stamp: drop a row on the + half of another row; its dots are added.', helpSub: 'Reverse stamp: drop it on the − half; its dots are added with colors flipped.', helpNeg: 'Flip: tap a row\'s ± button; all its dots change color.', helpPop: 'A blue dot and a red dot meeting in the same cell cancel out.', helpGoal: 'Goal: one blue dot in each diagonal cell, everything else empty.', helpLimit: 'A cell can hold at most 3 dots.', helpKeys: 'Keyboard: Ctrl+Z undo · R restart · H hint · 1-3 pick a row, then + − S (swap) F (flip)',
+      newTactic: 'New tier', stars: 'Stars', total: 'Total', done: 'Done', stepOf: '{n} moves left',
+      offlineReady: 'Ready for offline play.', lang_tr: 'Türkçe', lang_en: 'English',
+      keyboardPick: 'Source: row {a}. Pick a target row (1-{n}), then + − S, or F to flip.', keyboardOp: 'Source {a} → target {b}: + stamp, − reverse stamp, S swap',
+      firstDailyHint: 'Everyone gets the same board each day. Moves are the score; time is just information.', on: 'On', off: 'Off', rules: 'Rules',
+    }
+  };
+  let lang = 'tr';
+  function t(key, vars) {
+    const v = S[lang][key] ?? S.tr[key] ?? key;
+    if (typeof v !== 'string') return v;
+    return vars ? v.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? '')) : v;
+  }
+  function setLang(l) { lang = S[l] ? l : 'tr'; document.documentElement.lang = lang; }
+  function getLang() { return lang; }
+  const SUB = ['₀', '₁', '₂', '₃', '₄'];
+  // Hamle → notasyon "R₂ ← R₂ − R₁"
+  function notation(m) {
+    const a = SUB[m.i + 1], b = SUB[m.j + 1];
+    if (m.t === 'swap') return `R${a} ↔ R${b}`;
+    if (m.t === 'add') return `R${b} ← R${b} + R${a}`;
+    if (m.t === 'sub') return `R${b} ← R${b} − R${a}`;
+    return `R${a} ← −R${a}`;
+  }
+  function vec(r) { return '(' + r.map(v => (v < 0 ? '−' + (-v) : v)).join(', ') + ')'; }
+  // Evre 2 dili: sayılarla
+  function numeric(m, before, after) {
+    const b = before, a = after;
+    if (m.t === 'add') return `${vec(b[m.j])} + ${vec(b[m.i])} = ${vec(a[m.j])}`;
+    if (m.t === 'sub') return `${vec(b[m.j])} − ${vec(b[m.i])} = ${vec(a[m.j])}`;
+    if (m.t === 'neg') return `−${vec(b[m.i])} = ${vec(a[m.i])}`;
+    return `${vec(b[m.i])} ↔ ${vec(b[m.j])}`;
+  }
+  function words(m) { return t('moveWord')[m.t].replace('{a}', m.i + 1).replace('{b}', m.j + 1); }
+  A.i18n = { t, setLang, getLang, notation, numeric, words, langs: Object.keys(S) };
+})(window.Asris = window.Asris || {});
+
+/* Asris — ilerleme ve ayarlar (localStorage; dışa/içe aktarma kodu) */
+(function (A) {
+  'use strict';
+  const KEY = 'asris.v1';
+  const DEFAULT = () => ({
+    v: 1, lang: null, view: 'dots', notation: false, sound: true, theme: 'auto',
+    levels: {},            // no -> { stars, best, watched, done }
+    daily: {},             // dayIndex -> { moves, par, time, stars, done }
+    streak: { count: 0, last: -1 },
+    seen: {},              // tek seferlik olaylar: numbers, matrix, inverse, install, hazirlik...
+    unlockedView: false, created: Date.now()
+  });
+  let state = null;
+  function read() {
+    try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); if (o && o.v === 1) return Object.assign(DEFAULT(), o); } } catch (e) { /* özel pencere ya da engelli depolama */ }
+    return DEFAULT();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* sessizce geç */ } }
+  function get() { if (!state) state = read(); return state; }
+  function set(fn) { fn(get()); save(); }
+  function levelInfo(no) { return get().levels[no] || { stars: 0, best: null, watched: false, done: false }; }
+  function highestDone() { const l = get().levels; let h = 0; for (const k in l) if (l[k].done) h = Math.max(h, +k); return h; }
+  function isUnlocked(no) { return no === 1 || levelInfo(no - 1).done; }
+  function recordLevel(no, moves, par, watched) {
+    set(s => {
+      const cur = s.levels[no] || { stars: 0, best: null, watched: false, done: false };
+      cur.done = true;
+      if (watched) cur.watched = true;
+      else {
+        const stars = moves <= par ? 3 : moves <= par + 2 ? 2 : 1;
+        cur.stars = Math.max(cur.stars, stars);
+        cur.best = cur.best === null ? moves : Math.min(cur.best, moves);
+        cur.watched = false;
+      }
+      s.levels[no] = cur;
+    });
+    return levelInfo(no);
+  }
+  function totalStars() { const l = get().levels; let s = 0; for (const k in l) s += l[k].stars || 0; return s; }
+  function recordDaily(day, moves, par, time) {
+    set(s => {
+      const prev = s.daily[day];
+      const stars = moves <= par ? 3 : moves <= par + 2 ? 2 : 1;
+      if (!prev) {
+        s.daily[day] = { moves, par, time, stars, done: true };
+        if (s.streak.last === day - 1) s.streak.count += 1; else if (s.streak.last !== day) s.streak.count = 1;
+        s.streak.last = day;
+      }
+    });
+    return get().daily[day];
+  }
+  function markSeen(k) { set(s => { s.seen[k] = true; }); }
+  function seen(k) { return !!get().seen[k]; }
+  // Dışa aktarma: base64(JSON) — kısa ve kopyalanabilir
+  function exportCode() {
+    const s = get(); const min = { v: 1, lang: s.lang, view: s.view, notation: s.notation, sound: s.sound, theme: s.theme, levels: s.levels, daily: s.daily, streak: s.streak, seen: s.seen, unlockedView: s.unlockedView };
+    const json = JSON.stringify(min); const b64 = btoa(unescape(encodeURIComponent(json)));
+    return 'ASRIS1.' + b64;
+  }
+  function importCode(code) {
+    try {
+      const m = /ASRIS1\.([A-Za-z0-9+/=]+)/.exec((code || '').trim()); if (!m) return false;
+      const o = JSON.parse(decodeURIComponent(escape(atob(m[1])))); if (!o || o.v !== 1 || typeof o.levels !== 'object') return false;
+      state = Object.assign(DEFAULT(), o, { created: get().created }); save(); return true;
+    } catch (e) { return false; }
+  }
+  function resetAll() { state = DEFAULT(); save(); }
+  A.store = { get, set, save, levelInfo, highestDone, isUnlocked, recordLevel, totalStars, recordDaily, markSeen, seen, exportCode, importCode, resetAll };
+})(window.Asris = window.Asris || {});
+
+/* Asris — sentezlenmiş sesler (dosya yok, WebAudio) */
+(function (A) {
+  'use strict';
+  let ctx = null, master = null, enabled = true;
+  function ensure() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return ctx; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0.35; master.connect(ctx.destination); } catch (e) { ctx = null; }
+    return ctx;
+  }
+  function tone(freq, dur, type, gain, when, slideTo) {
+    const c = ensure(); if (!c || !enabled) return;
+    const t0 = c.currentTime + (when || 0);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(gain || 0.5, t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  function noise(dur, gain, when, freq) {
+    const c = ensure(); if (!c || !enabled) return;
+    const t0 = c.currentTime + (when || 0);
+    const len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq || 600;
+    const g = c.createGain(); g.gain.value = gain || 0.4;
+    src.connect(f); f.connect(g); g.connect(master); src.start(t0);
+  }
+  const S = {
+    grab() { tone(880, 0.05, 'sine', 0.15); },
+    drop() { noise(0.12, 0.35, 0, 500); tone(180, 0.1, 'triangle', 0.25); },
+    swap() { tone(520, 0.07, 'sine', 0.2); tone(660, 0.07, 'sine', 0.2, 0.06); },
+    flip() { tone(700, 0.09, 'triangle', 0.2, 0, 350); },
+    pop(k) { const f = 620 * Math.pow(1.19, Math.min(k || 0, 6)); tone(f, 0.11, 'sine', 0.3, 0, f * 1.5); },
+    limit() { tone(140, 0.12, 'square', 0.12); },
+    solve() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 0.5, 'sine', 0.25, i * 0.07)); },
+    phase() { [392, 523.25, 659.25].forEach((f, i) => tone(f, 0.35, 'triangle', 0.2, i * 0.14)); tone(783.99, 0.7, 'sine', 0.2, 0.42); },
+    tap() { tone(1000, 0.03, 'sine', 0.08); },
+    star(i) { tone(880 * Math.pow(1.25, i), 0.25, 'sine', 0.2); },
+  };
+  A.audio = { play(name, arg) { try { S[name] && S[name](arg); } catch (e) { /* ses hiçbir zaman oyunu durdurmaz */ } }, unlock: ensure, setEnabled(v) { enabled = !!v; }, get enabled() { return enabled; } };
+})(window.Asris = window.Asris || {});
+
+/* Asris — tahta bileşeni: SVG çizim, sürükleme, önizleme, animasyon, hayalet el */
+(function (A) {
+  'use strict';
+  const C = A.core, NS = 'http://www.w3.org/2000/svg';
+  const CS = 100, GAP = 10, HW = 56, FW = 56, M = 12, RH = CS;
+  const DOT = { 1: [[0, 0]], 2: [[-17, 0], [17, 0]], 3: [[0, -17], [-18, 14], [18, 14]] };
+  const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function svg(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function tween(ms, fn) {
+    return new Promise(res => {
+      if (reduced() || ms <= 0) { fn(1); res(); return; }
+      const t0 = performance.now();
+      (function step(now) { const p = Math.min(1, (now - t0) / ms); fn(ease(p)); if (p < 1) requestAnimationFrame(step); else res(); })(t0);
+    });
+  }
+  const wait = ms => new Promise(r => setTimeout(r, reduced() ? 0 : ms));
+
+  function create(container, opts) {
+    opts = Object.assign({ view: 'dots', brackets: false, interactive: true }, opts || {});
+    let n = 2, board = C.identity(2), view = opts.view, brackets = opts.brackets, interactive = opts.interactive, busy = false;
+    const handlers = { move: [], grab: [], flip: [] };
+    const W = () => M + HW + n * CS + (n - 1) * GAP + FW + M, H = () => M + n * RH + (n - 1) * GAP + M;
+    const rowY = i => M + i * (RH + GAP), cellX = k => M + HW + k * (CS + GAP), cellsMid = () => M + HW + (n * CS + (n - 1) * GAP) / 2;
+    const root = svg('svg', { class: 'board', role: 'application' }, container);
+    const gBrackets = svg('g', { class: 'brackets' }, root);
+    const gRows = svg('g', { class: 'rows' }, root);
+    const gFx = svg('g', { class: 'fx', 'pointer-events': 'none' }, root);
+    const gHand = svg('g', { class: 'hand', 'pointer-events': 'none', opacity: 0 }, root);
+    let rows = [];
+
+    function build() {
+      root.setAttribute('viewBox', `0 0 ${W()} ${H()}`);
+      gRows.innerHTML = ''; gBrackets.innerHTML = ''; rows = [];
+      for (let i = 0; i < n; i++) {
+        const g = svg('g', { class: 'row', transform: `translate(0,${rowY(i)})`, 'data-row': i }, gRows);
+        const handle = svg('g', { class: 'handle' }, g);
+        svg('rect', { x: M, y: 8, width: 44, height: RH - 16, rx: 12, class: 'handle-bg' }, handle);
+        for (let k = 0; k < 3; k++) svg('rect', { x: M + 14, y: RH / 2 - 14 + k * 12, width: 16, height: 3, rx: 1.5, class: 'grip' }, handle);
+        const sw = svg('g', { class: 'swap-mark', opacity: 0 }, handle);
+        svg('rect', { x: M, y: 8, width: 44, height: RH - 16, rx: 12, class: 'swap-bg' }, sw);
+        svg('path', { d: `M${M + 22} ${RH / 2 - 18} l-9 9 h6 v18 h6 v-18 h6 z M${M + 22} ${RH / 2 + 18} l-9 -9 h6 v-18 h6 v18 h6 z`, class: 'swap-arrow' }, sw);
+        const cells = [];
+        for (let k = 0; k < n; k++) {
+          const cg = svg('g', { class: 'cell', transform: `translate(${cellX(k)},0)` }, g);
+          svg('rect', { x: 0, y: 0, width: CS, height: CS, rx: 16, class: 'cell-bg' }, cg);
+          if (k === i) svg('rect', { x: 7, y: 7, width: CS - 14, height: CS - 14, rx: 11, class: 'target' }, cg);
+          const dots = svg('g', { class: 'dots' }, cg);
+          const num = svg('text', { x: CS / 2, y: CS / 2, class: 'num', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, cg);
+          const small = svg('text', { x: CS - 10, y: 22, class: 'num-small', 'text-anchor': 'end' }, cg);
+          cells.push({ g: cg, dots, num, small });
+        }
+        // düşürme yerleşimi: + / − yarıları
+        const ov = svg('g', { class: 'overlay', opacity: 0, 'pointer-events': 'none' }, g);
+        const half = (n * CS + (n - 1) * GAP) / 2, x0 = cellX(0);
+        const plus = svg('g', { class: 'half plus' }, ov); svg('rect', { x: x0, y: 0, width: half, height: RH, rx: 16, class: 'half-bg' }, plus);
+        svg('text', { x: x0 + 24, y: 30, class: 'half-label', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, plus).textContent = '+';
+        const minus = svg('g', { class: 'half minus' }, ov); svg('rect', { x: x0 + half, y: 0, width: half, height: RH, rx: 16, class: 'half-bg' }, minus);
+        svg('text', { x: x0 + half + 24, y: 30, class: 'half-label', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, minus).textContent = '−';
+        const flip = svg('g', { class: 'flip', role: 'button', tabindex: -1 }, g);
+        const fx = M + HW + n * CS + (n - 1) * GAP + 6;
+        svg('rect', { x: fx, y: RH / 2 - 22, width: 44, height: 44, rx: 22, class: 'flip-bg' }, flip);
+        svg('text', { x: fx + 22, y: RH / 2, class: 'flip-label', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, flip).textContent = '±';
+        rows.push({ g, handle, cells, ov, plus, minus, flip, i });
+      }
+      // köşeli parantezler (Evre 3)
+      const x1 = cellX(0) - 6, x2 = cellX(n - 1) + CS + 6, y1 = rowY(0) - 6, y2 = rowY(n - 1) + RH + 6;
+      svg('path', { d: `M${x1 + 14} ${y1} h-14 v${y2 - y1} h14`, class: 'bracket' }, gBrackets);
+      svg('path', { d: `M${x2 - 14} ${y1} h14 v${y2 - y1} h-14`, class: 'bracket' }, gBrackets);
+      applyView();
+    }
+    function renderDots(cellEl, v, cls) {
+      cellEl.dots.innerHTML = '';
+      const k = Math.abs(v); if (!k || view === 'matrix') return;
+      for (const [dx, dy] of DOT[Math.min(k, 3)]) {
+        if (v > 0) svg('circle', { cx: CS / 2 + dx, cy: CS / 2 + dy, r: 12, class: 'dot blue ' + (cls || '') }, cellEl.dots);
+        else svg('circle', { cx: CS / 2 + dx, cy: CS / 2 + dy, r: 10, class: 'dot red ' + (cls || '') }, cellEl.dots);
+      }
+    }
+    function fmt(v) { return v < 0 ? '−' + (-v) : String(v); }
+    function renderRow(i) {
+      for (let k = 0; k < n; k++) {
+        const c = rows[i].cells[k], v = board[i][k];
+        renderDots(c, v);
+        c.num.textContent = view === 'matrix' ? fmt(v) : '';
+        c.small.textContent = view === 'numbers' && v !== 0 ? fmt(v) : '';
+        c.g.classList.toggle('empty', v === 0);
+      }
+    }
+    function renderAll() { for (let i = 0; i < n; i++) renderRow(i); updateAria(); }
+    function applyView() { root.setAttribute('data-view', view); gBrackets.setAttribute('opacity', brackets ? 1 : 0); }
+    function updateAria() { root.setAttribute('aria-label', board.map((r, i) => `${A.i18n.t('level')} ${i + 1}: ${r.join(', ')}`).join('; ')); }
+
+    // ---- sürükleme ----
+    let drag = null, lastZone = null;
+    function pt(ev) { const p = root.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const m = root.getScreenCTM(); return m ? p.matrixTransform(m.inverse()) : { x: 0, y: 0 }; }
+    function zoneAt(p, src) {
+      for (let j = 0; j < n; j++) {
+        if (j === src) continue;
+        const y0 = rowY(j), y1 = y0 + RH;
+        if (p.y < y0 - GAP / 2 || p.y > y1 + GAP / 2) continue;
+        if (p.x < M + HW) return { j, z: 'swap' };
+        const mid = cellsMid();
+        let z = p.x < mid ? 'add' : 'sub';
+        if (lastZone && lastZone.j === j && (lastZone.z === 'add' || lastZone.z === 'sub') && Math.abs(p.x - mid) < 12) z = lastZone.z;
+        return { j, z };
+      }
+      return null;
+    }
+    function previewOf(src, target) {
+      if (!target) return null;
+      const m = target.z === 'swap' ? { t: 'swap', i: Math.min(src, target.j), j: Math.max(src, target.j) } : { t: target.z, i: src, j: target.j };
+      return { m, result: C.apply(board, m) };
+    }
+    function showPreview(src, target) {
+      for (const r of rows) { r.ov.setAttribute('opacity', 0); r.handle.querySelector('.swap-mark').setAttribute('opacity', 0); r.g.classList.remove('illegal', 'hot'); if (r.i !== src) renderRow(r.i); }
+      if (!target) return;
+      const r = rows[target.j], pv = previewOf(src, target);
+      r.g.classList.add('hot');
+      if (target.z === 'swap') { r.handle.querySelector('.swap-mark').setAttribute('opacity', 1); return; }
+      r.ov.setAttribute('opacity', 1);
+      r.plus.classList.toggle('active', target.z === 'add'); r.minus.classList.toggle('active', target.z === 'sub');
+      if (!pv.result) { r.g.classList.add('illegal'); return; }
+      for (let k = 0; k < n; k++) { const c = r.cells[k]; renderDots(c, pv.result[target.j][k], 'ghost'); if (view !== 'dots') { c.num.textContent = view === 'matrix' ? fmt(pv.result[target.j][k]) : ''; c.small.textContent = view === 'numbers' && pv.result[target.j][k] !== 0 ? fmt(pv.result[target.j][k]) : ''; } }
+    }
+    function onDown(ev) {
+      if (!interactive || busy || drag) return;
+      const rowEl = ev.target.closest('.row'); if (!rowEl) return;
+      if (ev.target.closest('.flip')) return;
+      if (ev.button !== undefined && ev.button !== 0) return;
+      const i = +rowEl.dataset.row; const p = pt(ev);
+      drag = { i, y0: p.y, dy: 0, f: 0, target: null, moved: false, id: ev.pointerId };
+      lastZone = null;
+      try { root.setPointerCapture(ev.pointerId); } catch (e) { /* eski tarayıcı */ }
+      gRows.appendChild(rows[i].g); rows[i].g.classList.add('dragging');
+      emit('grab', i); ev.preventDefault();
+    }
+    function onMove(ev) {
+      if (!drag || ev.pointerId !== drag.id) return;
+      const p = pt(ev); const dy = Math.max(-rowY(drag.i) - 20, Math.min(H() - rowY(drag.i) - RH + 20, p.y - drag.y0));
+      if (Math.abs(dy) > 4) drag.moved = true;
+      drag.dy = dy; drag.f = Math.min(1, Math.abs(dy) / 40); rows[drag.i].g.setAttribute('transform', chipTransform(drag.i, dy, drag.f));
+      const z = zoneAt(p, drag.i);
+      if (JSON.stringify(z) !== JSON.stringify(drag.target)) { drag.target = z; lastZone = z; showPreview(drag.i, z); }
+      ev.preventDefault();
+    }
+    async function onUp(ev) {
+      if (!drag || ev.pointerId !== drag.id) return;
+      const d = drag; drag = null; lastZone = null;
+      rows[d.i].g.classList.remove('dragging');
+      const pv = previewOf(d.i, d.target);
+      showPreview(d.i, null);
+      if (pv && pv.result) { busy = true; await settle(d.i, d.dy, d.f || 0); busy = false; emit('move', pv.m); }
+      else { if (pv && !pv.result) { shakeRow(d.target.j); A.audio.play('limit'); emit('limit'); } busy = true; await settle(d.i, d.dy, d.f || 0); busy = false; }
+    }
+    // sürüklenen sıra: parmağın üstünde küçülmüş bir "çip" olarak durur, hedef sıra ve önizleme görünür kalır
+    function chipTransform(i, dy, f) { const sc = 1 - 0.28 * f, lift = 0.8 * RH * f, cx = cellsMid(); const y = rowY(i) + dy - lift; return `translate(${cx * (1 - sc)},${y + RH / 2 * (1 - sc)}) scale(${sc})`; }
+    function settle(i, dy, f) { const g = rows[i].g; return tween(180, p => g.setAttribute('transform', chipTransform(i, dy * (1 - p), f * (1 - p)))).then(() => { g.setAttribute('transform', `translate(0,${rowY(i)})`); rows.forEach(r => gRows.appendChild(r.g)); }); }
+    function shakeRow(j) { const g = rows[j].g; tween(320, p => { const s = Math.sin(p * Math.PI * 4) * 6 * (1 - p); g.setAttribute('transform', `translate(${s},${rowY(j)})`); }); }
+    root.addEventListener('pointerdown', onDown); root.addEventListener('pointermove', onMove);
+    root.addEventListener('pointerup', onUp); root.addEventListener('pointercancel', onUp);
+    root.addEventListener('click', ev => { const f = ev.target.closest('.flip'); if (!f || !interactive || busy) return; const i = +f.closest('.row').dataset.row; emit('flip', i); emit('move', { t: 'neg', i, j: i }); });
+
+    // ---- animasyonlu hamle uygulama ----
+    async function animateMove(m, before, after) {
+      busy = true;
+      if (m.t === 'swap') {
+        const a = rows[m.i].g, b = rows[m.j].g, ya = rowY(m.i), yb = rowY(m.j);
+        A.audio.play('swap');
+        await tween(260, p => { a.setAttribute('transform', `translate(0,${ya + (yb - ya) * p})`); b.setAttribute('transform', `translate(0,${yb + (ya - yb) * p})`); });
+        board = after; a.setAttribute('transform', `translate(0,${ya})`); b.setAttribute('transform', `translate(0,${yb})`); renderAll();
+      } else if (m.t === 'neg') {
+        const g = rows[m.i].g; A.audio.play('flip');
+        const squash = s => g.setAttribute('transform', `translate(0,${rowY(m.i) + RH / 2 * (1 - s)}) scale(1,${s})`);
+        await tween(140, p => squash(1 - 0.9 * p));
+        board = after; renderRow(m.i);
+        await tween(140, p => squash(0.1 + 0.9 * p));
+        g.setAttribute('transform', `translate(0,${rowY(m.i)})`); updateAria();
+      } else {
+        const j = m.j; A.audio.play('drop');
+        // yok olan ve eklenen noktalar
+        let pops = 0;
+        const pre = before[j], post = after[j];
+        board = after;
+        for (let k = 0; k < n; k++) {
+          const c = rows[j].cells[k], a = pre[k], b = post[k], eff = (m.t === 'add' ? 1 : -1) * before[m.i][k];
+          const cancelled = (a !== 0 && eff !== 0 && Math.sign(a) !== Math.sign(eff)) ? Math.min(Math.abs(a), Math.abs(eff)) : 0;
+          if (cancelled) { pops += cancelled; popFx(j, k, cancelled); }
+          renderDots(c, b, b !== a ? 'in' : '');
+          c.num.textContent = view === 'matrix' ? fmt(b) : ''; c.small.textContent = view === 'numbers' && b !== 0 ? fmt(b) : ''; c.g.classList.toggle('empty', b === 0);
+        }
+        if (pops) { A.audio.play('pop', pops - 1); }
+        updateAria(); await wait(240);
+      }
+      busy = false;
+    }
+    function popFx(i, k, count) {
+      const cx = cellX(k) + CS / 2, cy = rowY(i) + CS / 2;
+      for (let q = 0; q < Math.min(count, 3); q++) {
+        const ring = svg('circle', { cx, cy, r: 8, class: 'pop' }, gFx);
+        tween(420 + q * 60, p => { ring.setAttribute('r', 8 + p * 34); ring.setAttribute('opacity', 1 - p); }).then(() => ring.remove());
+      }
+    }
+    async function celebrate() {
+      A.audio.play('solve');
+      for (let i = 0; i < n; i++) { const c = rows[i].cells[i]; c.g.classList.add('lit'); await wait(120); }
+      const beam = svg('rect', { x: cellX(0) - 20, y: rowY(0) - 20, width: 40, height: RH + 40, rx: 20, class: 'beam' }, gFx);
+      const dx = cellX(n - 1) - cellX(0), dy = rowY(n - 1) - rowY(0);
+      await tween(600, p => { beam.setAttribute('transform', `translate(${dx * p},${dy * p})`); beam.setAttribute('opacity', 0.9 * (1 - p * p)); });
+      beam.remove();
+    }
+
+    // ---- ipucu ve hayalet el ----
+    function clearHints() { rows.forEach(r => { r.g.classList.remove('hint-src', 'hint-dst'); r.ov.setAttribute('opacity', 0); r.handle.querySelector('.swap-mark').setAttribute('opacity', 0); r.flip.classList.remove('hint-flip'); }); }
+    function hintRow(i) { clearHints(); rows[i].g.classList.add('hint-src'); }
+    function hintMove(m) {
+      clearHints(); rows[m.i].g.classList.add('hint-src');
+      if (m.t === 'neg') { rows[m.i].flip.classList.add('hint-flip'); return; }
+      rows[m.j].g.classList.add('hint-dst');
+      if (m.t === 'swap') rows[m.j].handle.querySelector('.swap-mark').setAttribute('opacity', 1);
+      else { const r = rows[m.j]; r.ov.setAttribute('opacity', 1); r.plus.classList.toggle('active', m.t === 'add'); r.minus.classList.toggle('active', m.t === 'sub'); }
+    }
+    let handTimer = null, ghostGen = 0;
+    function handPath() {
+      gHand.innerHTML = '';
+      svg('circle', { cx: 0, cy: 0, r: 30, class: 'hand-ring' }, gHand);
+      svg('circle', { cx: 0, cy: 0, r: 18, class: 'hand-tip' }, gHand);
+    }
+    async function ghost(m) {
+      stopGhost(); handPath();
+      const gen = ++ghostGen;
+      const run = async () => {
+        if (!gHand.isConnected || gen !== ghostGen) return;
+        const src = m.i, dst = m.j;
+        let x0, y0, x1, y1;
+        if (m.t === 'neg') { x0 = M + HW + n * CS + (n - 1) * GAP + 28; y0 = rowY(src) + RH / 2 + 30; x1 = x0; y1 = rowY(src) + RH / 2; }
+        else if (m.t === 'swap') { x0 = M + 22; y0 = rowY(src) + RH / 2; x1 = M + 22; y1 = rowY(dst) + RH / 2; }
+        else { const mid = cellsMid(); x0 = m.t === 'add' ? mid - 70 : mid + 70; y0 = rowY(src) + RH / 2; x1 = x0; y1 = rowY(dst) + RH / 2; }
+        const alive = () => gen === ghostGen;
+        gHand.setAttribute('transform', `translate(${x0},${y0})`);
+        await tween(300, p => { if (alive()) gHand.setAttribute('opacity', p); }); if (!alive()) return;
+        await tween(220, p => { if (alive()) gHand.setAttribute('transform', `translate(${x0},${y0}) scale(${1 - 0.15 * p})`); }); if (!alive()) return;
+        if (m.t !== 'neg') {
+          rows[src].g.classList.add('ghost-lift');
+          await tween(700, p => { if (!alive()) return; gHand.setAttribute('transform', `translate(${x0 + (x1 - x0) * p},${y0 + (y1 - y0) * p}) scale(0.85)`); rows[src].g.setAttribute('transform', `translate(0,${rowY(src) + (y1 - y0) * p * 0.7})`); }); if (!alive()) return;
+          rows[dst].g.classList.add('hot');
+          if (m.t !== 'swap') { rows[dst].ov.setAttribute('opacity', 1); rows[dst].plus.classList.toggle('active', m.t === 'add'); rows[dst].minus.classList.toggle('active', m.t === 'sub'); } else rows[dst].handle.querySelector('.swap-mark').setAttribute('opacity', 1);
+        } else { await tween(500, p => { if (alive()) gHand.setAttribute('transform', `translate(${x0 + (x1 - x0) * p},${y0 + (y1 - y0) * p}) scale(0.85)`); }); if (!alive()) return; rows[src].flip.classList.add('hint-flip'); }
+        await wait(500); if (!alive()) return;
+        await tween(250, p => { if (alive()) gHand.setAttribute('opacity', 1 - p); }); if (!alive()) return;
+        rows.forEach(r => { r.g.classList.remove('hot', 'ghost-lift'); r.ov.setAttribute('opacity', 0); r.handle.querySelector('.swap-mark').setAttribute('opacity', 0); r.flip.classList.remove('hint-flip'); });
+        if (m.t !== 'neg') await tween(200, p => { if (alive()) rows[src].g.setAttribute('transform', `translate(0,${rowY(src) + (y1 - y0) * 0.7 * (1 - p)})`); });
+        if (!alive()) return;
+        rows[src].g.setAttribute('transform', `translate(0,${rowY(src)})`);
+        handTimer = setTimeout(run, 1400);
+      };
+      handTimer = setTimeout(run, 500);
+    }
+    function stopGhost() { ghostGen++; if (handTimer) { clearTimeout(handTimer); handTimer = null; } gHand.setAttribute('opacity', 0); rows.forEach(r => { r.g.classList.remove('hot', 'ghost-lift'); r.g.setAttribute('transform', `translate(0,${rowY(r.i)})`); r.ov.setAttribute('opacity', 0); r.handle.querySelector('.swap-mark').setAttribute('opacity', 0); r.flip.classList.remove('hint-flip'); }); }
+
+    function emit(ev, arg) { (handlers[ev] || []).forEach(f => f(arg)); }
+    const api = {
+      el: root,
+      setBoard(b) { const nn = b.length; board = C.clone(b); if (nn !== n) { n = nn; build(); } rows.forEach(r => r.cells.forEach(c => c.g.classList.remove('lit'))); renderAll(); },
+      get board() { return board; },
+      setView(v) { view = v; applyView(); renderAll(); }, setBrackets(v) { brackets = v; applyView(); },
+      setInteractive(v) { interactive = v; root.classList.toggle('static', !v); },
+      on(ev, f) { (handlers[ev] = handlers[ev] || []).push(f); return api; },
+      animateMove, celebrate, hintRow, hintMove, clearHints, ghost, stopGhost,
+      get busy() { return busy; }, get dragging() { return !!drag; },
+      pulseFlip(i) { rows[i].flip.classList.add('hint-flip'); },
+      destroy() { stopGhost(); root.remove(); }
+    };
+    build(); renderAll();
+    return api;
+  }
+  A.Board = { create, tween, wait };
+})(window.Asris = window.Asris || {});
+
+/* Asris — oyun ekranı denetleyicisi: kampanya bölümü ve Günün Tahtası */
+(function (A) {
+  'use strict';
+  const C = A.core, t = (k, v) => A.i18n.t(k, v), $ = s => document.querySelector(s);
+  let board = null, S = null; // S: mevcut oturum
+
+  function phaseOf(no) { return no <= 6 ? 1 : no <= 11 ? 2 : 3; }
+  function effectiveView(no) {
+    const st = A.store.get();
+    if (st.unlockedView) return st.view;
+    return phaseOf(no) >= 2 ? 'numbers' : 'dots';
+  }
+  function bracketsFor(no) { return A.store.highestDone() >= 11 || no >= 12; }
+  function tacticName(k) { return t({ tanitim: 'tacticTanitim', bariz: 'tacticBariz', hazirlik: 'tacticHazirlik', kombinasyon: 'tacticKombinasyon', feda: 'tacticFeda' }[k]); }
+  function fmtTime(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+
+  function mount() {
+    const wrap = $('#board-wrap'); wrap.innerHTML = '';
+    board = A.Board.create(wrap, {});
+    board.on('move', onMove).on('grab', () => { A.audio.play('grab'); clearIdle(); board.stopGhost(); S.interacted = true; hideCaption(); }).on('flip', () => { clearIdle(); board.stopGhost(); S.interacted = true; hideCaption(); });
+  }
+  // ---- oturum ----
+  function start(kind, def, opts) {
+    if (!board) mount();
+    S = { kind, def, no: def.no || 0, start: C.clone(def.board), history: [], comp: C.identity(def.n || def.board.length), hintTier: 0, watched: false, t0: Date.now(), seen: new Map(), drift: 0, lastH: C.wrongDots(def.board), interacted: false, finished: false, hintBusy: false, day: opts && opts.day };
+    board.setBoard(def.board); board.setInteractive(true); board.clearHints();
+    const no = kind === 'level' ? def.no : 99;
+    board.setView(effectiveView(no)); board.setBrackets(bracketsFor(no));
+    $('#play-title').textContent = kind === 'level' ? t('levelN', { n: def.no }) : t('dailyN', { n: opts.day + 1 });
+    $('#play-sub').textContent = kind === 'level' ? t(`phase${phaseOf(def.no)}`) : t('dailyTitle');
+    $('#play-timer').hidden = kind !== 'daily';
+    updateMeta(); hideCaption(); $('#hint-btn').classList.remove('loading');
+    A.ui.show('play');
+    A.dist.load();
+    if (kind === 'level') introFor(def); else { if (S.timer) clearInterval(S.timer); S.timer = setInterval(() => { if (S && !S.finished) $('#play-timer').textContent = fmtTime(Date.now() - S.t0); }, 500); }
+    armIdle();
+  }
+  function updateMeta() {
+    const m = S.history.length, p = S.def.par;
+    $('#play-moves').textContent = t('movesOf', { m, p });
+    const stars = m <= p ? 3 : m <= p + 2 ? 2 : 1;
+    $('#play-stars').innerHTML = [1, 2, 3].map(i => `<span class="star ${i <= stars && !S.watched ? 'on' : ''}">★</span>`).join('');
+    $('#undo-btn').disabled = !m; $('#reset-btn').disabled = !m;
+  }
+  function pushHistory(m, before) { S.history.push({ m, before, comp: C.clone(S.comp) }); S.comp = C.apply(S.comp, m) || S.comp; }
+
+  async function onMove(m) {
+    if (!S || S.finished || S.hintBusy) return;
+    const before = board.board, after = C.apply(before, m);
+    if (!after) return;
+    board.clearHints(); hideCaption();
+    pushHistory(m, before);
+    await board.animateMove(m, before, after);
+    updateMeta(); armIdle();
+    if (C.isSolved(after)) { finish(); return; }
+    // yanlış kavram sinyalleri
+    const code = C.encode(after), cnt = (S.seen.get(code) || 0) + 1; S.seen.set(code, cnt);
+    const h = C.wrongDots(after); S.drift = h > S.lastH ? S.drift + 1 : 0; S.lastH = h;
+    if (cnt === 3) { A.ui.toast(t('seenBefore')); freeHint(1); }
+    else if (S.drift === 3) { A.ui.toast(t('driftingAway')); $('#undo-btn').classList.add('pulse'); setTimeout(() => $('#undo-btn').classList.remove('pulse'), 2400); S.drift = 0; }
+  }
+  function undo() {
+    if (!S || S.finished || board.busy || !S.history.length) return;
+    const h = S.history.pop(); S.comp = h.comp; board.setBoard(h.before); board.clearHints(); S.hintTier = Math.min(S.hintTier, 0);
+    S.lastH = C.wrongDots(h.before); S.drift = 0; updateMeta(); A.audio.play('tap');
+  }
+  function reset() {
+    if (!S || S.finished || board.busy) return;
+    S.history = []; S.comp = C.identity(S.start.length); S.hintTier = 0; S.watched = false; S.seen.clear(); S.drift = 0; S.lastH = C.wrongDots(S.start);
+    board.setBoard(S.start); board.clearHints(); updateMeta(); A.audio.play('tap');
+  }
+  // ---- ipucu ----
+  function freeHint(tier) { if (S.hintTier < tier) hint(tier); }
+  async function hint(force) {
+    if (!S || S.finished || board.busy || S.hintBusy) return;
+    const btn = $('#hint-btn');
+    if (!A.dist.ready() && board.board.length === 3) {
+      btn.classList.add('loading'); A.ui.toast(t('hintLoading'));
+      const ok = await A.dist.load(); btn.classList.remove('loading');
+      if (!ok) { A.ui.toast(t('hintOffline')); return; }
+      if (!S || S.finished) return;
+    }
+    const bm = A.dist.bestMoves(board.board); if (!bm || !bm.moves.length) return;
+    const tier = force || Math.min(3, S.hintTier + 1);
+    const m = bm.moves[0];
+    if (tier === 1) { S.hintTier = 1; board.hintRow(m.i); A.ui.toast(t('hint1')); }
+    else if (tier === 2) { S.hintTier = 2; board.hintMove(m); A.ui.toast(t('hint2')); }
+    else {
+      const go = await A.ui.confirm(t('hint3Confirm'), t('hint3Go'), t('cancel'));
+      if (!go || !S || S.finished) return;
+      S.hintTier = 3; S.watched = true; updateMeta(); S.hintBusy = true; board.setInteractive(false); A.ui.toast(t('hint3'));
+      try {
+        let guard = 0;
+        while (!C.isSolved(board.board) && guard++ < 20) {
+          const r = A.dist.bestMoves(board.board); if (!r || !r.moves.length) break;
+          const mv = r.moves[0], before = board.board, after = C.apply(before, mv);
+          board.hintMove(mv); await A.Board.wait(650); board.clearHints();
+          pushHistory(mv, before); await board.animateMove(mv, before, after); updateMeta(); await A.Board.wait(250);
+        }
+      } finally { S.hintBusy = false; board.setInteractive(true); }
+      if (C.isSolved(board.board)) finish();
+    }
+    A.audio.play('tap');
+  }
+  // ---- boşta kalma / takılma ----
+  let idleT = null, stuckT = null;
+  function armIdle() {
+    clearIdle();
+    if (!S || S.finished) return;
+    if (S.kind === 'level' && S.def.no <= 4 && !S.interacted) idleT = setTimeout(showCaption, 20000);
+    stuckT = setTimeout(() => { if (S && !S.finished && S.hintTier < 3) A.ui.toast(t('stuckOffer'), 4000); }, 180000);
+  }
+  function clearIdle() { if (idleT) clearTimeout(idleT); if (stuckT) clearTimeout(stuckT); idleT = stuckT = null; }
+  function showCaption() { if (!S || S.kind !== 'level' || S.def.no > 4) return; const m = C.parseMove(S.def.sol[0]); const key = { swap: 'captionSwap', add: 'captionAdd', sub: 'captionSub', neg: 'captionNeg' }[m.t]; $('#caption').textContent = t(key); $('#caption').hidden = false; }
+  function hideCaption() { $('#caption').hidden = true; }
+
+  // ---- bölüm girişleri ----
+  async function introFor(def) {
+    const no = def.no;
+    if (no <= 4) { const m = C.parseMove(def.sol[0]); setTimeout(() => { if (S && S.def === def && !S.interacted) board.ghost(m); }, 400); }
+    if (no === 7 && !A.store.seen('numbers')) { A.store.markSeen('numbers'); await A.Board.wait(500); A.audio.play('phase'); await A.ui.card({ title: t('numbersAppear'), body: t('numbersAppearBody'), primary: t('ok') }); }
+    if (no === 12 && !A.store.seen('matrix')) { A.store.markSeen('matrix'); await A.Board.wait(600); A.audio.play('phase'); board.el.classList.add('reveal'); await A.Board.wait(900); const v = await A.ui.viewChoice(); A.store.set(s => { s.view = v; s.unlockedView = true; }); board.setView(v); board.el.classList.remove('reveal'); }
+  }
+  // ---- bitiş ----
+  async function finish() {
+    if (!S || S.finished) return;
+    S.finished = true; clearIdle(); if (S.timer) clearInterval(S.timer);
+    board.setInteractive(false); board.clearHints();
+    const moves = S.history.length, par = S.def.par, elapsed = Date.now() - S.t0;
+    await board.celebrate();
+    if (S.kind === 'level') {
+      const no = S.def.no, info = A.store.recordLevel(no, moves, par, S.watched);
+      const stars = S.watched ? 0 : moves <= par ? 3 : moves <= par + 2 ? 2 : 1;
+      const firstKademe = { 16: 'hazirlik', 26: 'kombinasyon', 31: 'feda', 5: 'bariz' }[no];
+      let intro = null; if (firstKademe && !A.store.seen('k_' + firstKademe)) { A.store.markSeen('k_' + firstKademe); intro = t('tacticIntro' + firstKademe[0].toUpperCase() + firstKademe.slice(1)); }
+      if (no === 20 && !A.store.seen('inverse')) { A.store.markSeen('inverse'); await A.ui.inverseCard(S.start, S.comp); }
+      const action = await A.ui.labCard({ no, moves, par, stars, watched: S.watched, tactic: tacticName(S.def.kademe), intro, moveLines: moveLines(no), best: info.best, last: no === 45, totalStars: A.store.totalStars() });
+      if (no === 6 && !A.store.seen('install')) { A.store.markSeen('install'); await A.pwa.offer(); }
+      if (action === 'next') { if (no < 45) startLevel(no + 1); else A.ui.show('map'); }
+      else if (action === 'retry') startLevel(no);
+      else A.ui.show('map');
+    } else {
+      const res = A.store.recordDaily(S.day, moves, par, elapsed);
+      const action = await A.ui.dailyResult(S.day, res, moves, par, elapsed);
+      if (action === 'retry') startDaily(S.day, true); else A.ui.show('home');
+    }
+  }
+  function moveLines(no) {
+    const ph = phaseOf(no), notation = A.store.get().notation;
+    return S.history.map(h => {
+      const after = C.apply(h.before, h.m);
+      const w = A.i18n.words(h.m), num = A.i18n.numeric(h.m, h.before, after), nt = A.i18n.notation(h.m), term = h.m.t === 'swap' ? t('rowSwap') : h.m.t === 'neg' ? t('rowNeg') : t('rowOp');
+      if (ph === 1 && !notation) return { main: w };
+      if (ph === 2 && !notation) return { main: w, sub: num };
+      return { main: nt + ' · ' + term, sub: ph >= 3 ? w : num };
+    });
+  }
+  function startLevel(no) {
+    const def = A.data.campaign[no - 1]; if (!def) return;
+    if (!A.store.isUnlocked(no)) { A.ui.show('map'); return; }
+    start('level', def);
+  }
+  function dayIndex() { const now = new Date(); const local = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); const [y, m, d] = A.data.epoch.split('-').map(Number); return Math.round((local - Date.UTC(y, m - 1, d)) / 86400000); }
+  function dailyDef(day) { const pool = A.data.daily; const P = pool[((day % pool.length) + pool.length) % pool.length]; return Object.assign({ n: 3 }, P); }
+  function startDaily(day, again) { start('daily', dailyDef(day), { day, again }); }
+  function current() { return S; }
+  A.play = { startLevel, startDaily, dayIndex, dailyDef, undo, reset, hint, current, phaseOf, tacticName, fmtTime, makeMove: m => onMove(m), remount() { if (board) board.destroy(); board = null; }, get board() { return board; } };
+})(window.Asris = window.Asris || {});
+
+/* Asris — ekranlar, kartlar, harita, ayarlar, günlük */
+(function (A) {
+  'use strict';
+  const t = (k, v) => A.i18n.t(k, v), $ = s => document.querySelector(s), C = A.core;
+  function h(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  const SCREENS = ['home', 'map', 'play', 'daily', 'settings'];
+  let current = 'home';
+  function show(name) {
+    current = name;
+    for (const s of SCREENS) { const el = $('#screen-' + s); el.hidden = s !== name; }
+    if (name === 'home') renderHome(); if (name === 'map') renderMap(); if (name === 'settings') renderSettings(); if (name === 'daily') renderDaily();
+    window.scrollTo(0, 0);
+  }
+  // ---- küçük tahta (önizleme) ----
+  function miniBoard(b, cls) {
+    const n = b.length, cs = 26, g = 4, W = n * cs + (n - 1) * g;
+    let s = `<svg class="mini ${cls || ''}" viewBox="0 0 ${W} ${W}" aria-hidden="true">`;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const x = j * (cs + g), y = i * (cs + g), v = b[i][j];
+      s += `<rect x="${x}" y="${y}" width="${cs}" height="${cs}" rx="6" class="mini-cell ${i === j ? 'diag' : ''}"/>`;
+      const k = Math.min(Math.abs(v), 3), off = k === 0 ? [] : k === 1 ? [[0, 0]] : k === 2 ? [[-5, 0], [5, 0]] : [[0, -5], [-5, 4], [5, 4]];
+      for (const [dx, dy] of off) s += v > 0 ? `<circle cx="${x + cs / 2 + dx}" cy="${y + cs / 2 + dy}" r="3.6" class="mini-blue"/>` : `<circle cx="${x + cs / 2 + dx}" cy="${y + cs / 2 + dy}" r="3" class="mini-red"/>`;
+    }
+    return s + '</svg>';
+  }
+  function matrixText(b) { return b.map(r => r.map(v => (v < 0 ? '−' + (-v) : String(v)).padStart(2, ' ')).join(' ')).join('\n'); }
+  function starsHtml(n, total) { total = total || 3; let s = ''; for (let i = 1; i <= total; i++) s += `<span class="star ${i <= n ? 'on' : ''}">★</span>`; return `<span class="stars" aria-label="${n}/${total}">${s}</span>`; }
+
+  // ---- ana ekran ----
+  function renderHome() {
+    const st = A.store.get(), hd = A.store.highestDone(), next = Math.min(45, hd + 1), day = A.play.dayIndex(), daily = st.daily[day];
+    const el = $('#screen-home');
+    el.innerHTML = `
+      <div class="home">
+        <div class="logo" aria-label="Asris">${logo()}</div>
+        <p class="tagline">${esc(t('tagline'))}</p>
+        <div class="home-actions">
+          <button class="btn primary big" id="btn-campaign"><span>${esc(hd ? t('continue') : t('start'))}</span><small>${esc(t('levelN', { n: next }))} · ${esc(t('world1'))}</small></button>
+          <button class="btn big" id="btn-daily"><span>${esc(t('daily'))}</span><small>${daily ? esc(t('dailyBest')) + ' · ' + daily.moves + ' · ' + starsText(daily.stars) : esc(t('dailyN', { n: day + 1 }))}</small></button>
+          <div class="row-btns">
+            <button class="btn" id="btn-map">${esc(t('map'))}</button>
+            <button class="btn" id="btn-help">${esc(t('help'))}</button>
+            <button class="btn" id="btn-settings">${esc(t('settings'))}</button>
+          </div>
+        </div>
+        <p class="home-stars">★ ${esc(t('stars'))}: <b>${A.store.totalStars()}</b> / 135</p>
+      </div>`;
+    $('#btn-campaign').onclick = () => A.play.startLevel(next);
+    $('#btn-daily').onclick = () => show('daily');
+    $('#btn-map').onclick = () => show('map');
+    $('#btn-help').onclick = () => help();
+    $('#btn-settings').onclick = () => show('settings');
+  }
+  function starsText(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
+  function logo() {
+    return `<svg viewBox="0 0 220 64" class="logo-svg" role="img" aria-label="Asris"><g class="logo-cells">
+      <rect x="4" y="4" width="26" height="26" rx="7"/><rect x="34" y="4" width="26" height="26" rx="7"/><rect x="4" y="34" width="26" height="26" rx="7"/><rect x="34" y="34" width="26" height="26" rx="7"/>
+      <circle cx="17" cy="17" r="5.5" class="lb"/><circle cx="47" cy="47" r="5.5" class="lb"/><circle cx="47" cy="17" r="4.5" class="lr"/></g>
+      <text x="76" y="46" class="logo-text">Asris</text></svg>`;
+  }
+  // ---- harita ----
+  function renderMap() {
+    const el = $('#screen-map'); const st = A.store.get();
+    const groups = [{ k: 'phase1', from: 1, to: 6 }, { k: 'phase2', from: 7, to: 11 }, { k: 'phase3', from: 12, to: 45 }];
+    const marks = { 5: 'tacticBariz', 16: 'tacticHazirlik', 26: 'tacticKombinasyon', 31: 'tacticFeda' };
+    let html = `<header class="bar"><button class="icon-btn" id="map-back" aria-label="${esc(t('back'))}">${icon('back')}</button><div class="bar-title"><b>${esc(t('world1'))}</b><small>${esc(t('stars'))} ${A.store.totalStars()} / 135</small></div><span class="bar-spacer"></span></header><div class="map">`;
+    for (const g of groups) {
+      html += `<section class="phase"><h2>${esc(t(g.k))}</h2><div class="levels">`;
+      for (let no = g.from; no <= g.to; no++) {
+        const info = A.store.levelInfo(no), unlocked = A.store.isUnlocked(no), L = A.data.campaign[no - 1];
+        const cls = unlocked ? (info.done ? 'done' : 'open') : 'locked';
+        html += `<button class="lvl ${cls}" data-no="${no}" ${unlocked ? '' : 'disabled'} aria-label="${esc(t('levelN', { n: no }))} ${unlocked ? '' : esc(t('locked'))}">
+          <span class="lvl-no">${no}</span>${marks[no] ? `<span class="lvl-mark">${esc(t(marks[no]))}</span>` : ''}
+          <span class="lvl-stars">${info.done ? (info.watched && !info.stars ? '<span class="watched">👁</span>' : starsText(info.stars)) : ''}</span>
+          <span class="lvl-size">${L.n}×${L.n}${L.feda ? ' · ' + esc(t('tacticFeda')) : ''}</span></button>`;
+      }
+      html += '</div></section>';
+    }
+    el.innerHTML = html + '</div>';
+    $('#map-back').onclick = () => show('home');
+    el.querySelectorAll('.lvl').forEach(b => b.onclick = () => A.play.startLevel(+b.dataset.no));
+  }
+  function icon(name) {
+    const P = { back: 'M15 18l-6-6 6-6', undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3', reset: 'M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0 1 14-3l2 3M20 14a8 8 0 0 1-14 3l-2-3', hint: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.4 1 2.5h6c0-1.1.3-1.9 1-2.5A6 6 0 0 0 12 3z', help: 'M12 17h.01M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7', close: 'M6 6l12 12M18 6L6 18', copy: 'M8 8h10v12H8zM6 16H4V4h10v2' };
+    return `<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="${P[name]}"/></svg>`;
+  }
+  // ---- oyun ekranı iskeleti ----
+  function buildPlay() {
+    $('#screen-play').innerHTML = `
+      <header class="bar"><button class="icon-btn" id="play-back" aria-label="${esc(t('back'))}">${icon('back')}</button>
+        <div class="bar-title"><b id="play-title"></b><small id="play-sub"></small></div>
+        <div class="bar-meta"><span id="play-moves" class="mono"></span><span id="play-timer" class="mono" hidden>0:00</span><span id="play-stars" class="stars"></span></div>
+        <div class="goal" aria-hidden="true">${miniBoard(C.identity(3), 'goal')}</div></header>
+      <div class="play-area"><div id="board-wrap"></div><p id="caption" class="caption" hidden></p></div>
+      <footer class="bottombar">
+        <button class="tool" id="undo-btn" aria-label="${esc(t('undo'))}">${icon('undo')}<span>${esc(t('undo'))}</span></button>
+        <button class="tool" id="reset-btn" aria-label="${esc(t('reset'))}">${icon('reset')}<span>${esc(t('reset'))}</span></button>
+        <button class="tool accent" id="hint-btn" aria-label="${esc(t('hint'))}">${icon('hint')}<span>${esc(t('hint'))}</span></button>
+        <button class="tool" id="help-btn" aria-label="${esc(t('help'))}">${icon('help')}<span>${esc(t('rules'))}</span></button>
+      </footer>`;
+    $('#play-back').onclick = () => { const s = A.play.current(); show(s && s.kind === 'daily' ? 'daily' : 'map'); };
+    $('#undo-btn').onclick = () => A.play.undo(); $('#reset-btn').onclick = () => A.play.reset(); $('#hint-btn').onclick = () => A.play.hint(); $('#help-btn').onclick = () => help();
+  }
+  // ---- kartlar / modallar ----
+  let modalResolve = null;
+  function openModal(html, opts) {
+    const m = $('#modal'); m.innerHTML = `<div class="modal-back"></div><div class="modal-card ${opts && opts.cls || ''}" role="dialog" aria-modal="true">${html}</div>`; m.hidden = false;
+    document.body.classList.add('modal-open');
+    return new Promise(res => { modalResolve = res; });
+  }
+  function closeModal(v) { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; document.body.classList.remove('modal-open'); if (modalResolve) { const r = modalResolve; modalResolve = null; r(v); } }
+  function bind(sel, v) { const el = $(sel); if (el) el.onclick = () => closeModal(v); }
+  function card(o) { const p = openModal(`<h2>${esc(o.title)}</h2><p>${esc(o.body)}</p><div class="modal-actions"><button class="btn primary" id="m-ok">${esc(o.primary || t('ok'))}</button></div>`); bind('#m-ok', true); return p; }
+  function confirm(body, yes, no) { const p = openModal(`<p>${esc(body)}</p><div class="modal-actions"><button class="btn" id="m-no">${esc(no)}</button><button class="btn primary" id="m-yes">${esc(yes)}</button></div>`); bind('#m-no', false); bind('#m-yes', true); return p; }
+  function viewChoice() {
+    const b = [[1, -2, 0], [0, 1, 1], [-1, 0, 1]];
+    const p = openModal(`<h2 class="reveal-title">${esc(t('matrixReveal'))}</h2><p>${esc(t('matrixRevealBody'))}</p>
+      <div class="view-grid">
+        <button class="view-opt" data-v="dots">${miniBoard(b)}<span>${esc(t('viewDots'))}</span></button>
+        <button class="view-opt" data-v="numbers">${miniBoard(b)}<span class="mono small-nums">1 −2 0</span><span>${esc(t('viewNumbers'))}</span></button>
+        <button class="view-opt" data-v="matrix"><pre class="matrix-pre">${esc(matrixText(b))}</pre><span>${esc(t('viewMatrix'))}</span></button>
+      </div><p class="note">${esc(t('viewNote'))}</p>`, { cls: 'wide' });
+    document.querySelectorAll('.view-opt').forEach(el => el.onclick = () => closeModal(el.dataset.v));
+    return p;
+  }
+  function inverseCard(start, inv) {
+    const p = openModal(`<h2 class="reveal-title">${esc(t('inverseReveal'))}</h2><p>${esc(t('inverseRevealBody'))}</p>
+      <div class="inv-grid"><div><small>${esc(t('startLabel'))} A</small><pre class="matrix-pre">${esc(matrixText(start))}</pre></div><div><small>${esc(t('inverseLabel'))} A⁻¹</small><pre class="matrix-pre">${esc(matrixText(inv))}</pre></div></div>
+      <div class="modal-actions"><button class="btn primary" id="m-ok">${esc(t('ok'))}</button></div>`, { cls: 'wide' });
+    bind('#m-ok', true); return p;
+  }
+  function labCard(o) {
+    const title = o.watched ? t('watched') : o.moves < o.par ? t('solvedUnder') : o.moves === o.par ? t('solvedPar') : t('solved');
+    const lines = o.moveLines.map(l => `<li><span>${esc(l.main)}</span>${l.sub ? `<small class="mono">${esc(l.sub)}</small>` : ''}</li>`).join('');
+    const p = openModal(`
+      <div class="lab-head"><div class="lab-stars">${starsHtml(o.stars)}</div><h2>${esc(title)}</h2><p class="mono">${esc(t('movesOf', { m: o.moves, p: o.par }))}${o.best !== null && o.best !== undefined ? ` · ${esc(t('best'))} ${o.best}` : ''}</p>${o.watched ? `<p class="note">${esc(t('watchedNote'))}</p>` : ''}</div>
+      <div class="chips"><span class="chip">${esc(t('levelN', { n: o.no }))}</span><span class="chip accent">${esc(o.tactic)}</span></div>
+      ${o.intro ? `<p class="intro">${esc(o.intro)}</p>` : ''}
+      <details class="moves" ${o.moveLines.length <= 4 ? 'open' : ''}><summary>${esc(t('yourMoves'))} (${o.moveLines.length})</summary><ol>${lines}</ol></details>
+      ${o.last ? `<p class="intro">${esc(t('done'))} · ${esc(t('stars'))} ${o.totalStars} / 135</p>` : ''}
+      <div class="modal-actions"><button class="btn" id="m-map">${esc(t('map'))}</button><button class="btn" id="m-retry">${esc(t('retry'))}</button><button class="btn primary" id="m-next">${esc(o.last ? t('map') : t('next'))}</button></div>`, { cls: 'lab' });
+    bind('#m-map', 'map'); bind('#m-retry', 'retry'); bind('#m-next', o.last ? 'map' : 'next');
+    // yıldızları sırayla yak
+    const st = document.querySelectorAll('.lab-stars .star.on'); st.forEach((s, i) => { s.classList.remove('on'); setTimeout(() => { s.classList.add('on', 'pop'); A.audio.play('star', i); }, 250 + i * 220); });
+    return p;
+  }
+  function help() {
+    const p = openModal(`<h2>${esc(t('helpTitle'))}</h2><ul class="help-list">
+      <li>${esc(t('helpSwap'))}</li><li>${esc(t('helpAdd'))}</li><li>${esc(t('helpSub'))}</li><li>${esc(t('helpNeg'))}</li><li>${esc(t('helpPop'))}</li><li>${esc(t('helpGoal'))}</li><li>${esc(t('helpLimit'))}</li></ul>
+      <p class="note">${esc(t('helpKeys'))}</p><div class="modal-actions"><button class="btn primary" id="m-ok">${esc(t('ok'))}</button></div>`, { cls: 'wide' });
+    bind('#m-ok', true); return p;
+  }
+  // ---- günlük ----
+  function renderDaily() {
+    const el = $('#screen-daily'), day = A.play.dayIndex(), st = A.store.get(), res = st.daily[day], def = A.play.dailyDef(day), gate = !A.store.levelInfo(4).done;
+    el.innerHTML = `<header class="bar"><button class="icon-btn" id="daily-back" aria-label="${esc(t('back'))}">${icon('back')}</button><div class="bar-title"><b>${esc(t('dailyN', { n: day + 1 }))}</b><small>${esc(t('dailyTitle'))}${st.streak.count > 1 ? ' · ' + esc(t('dailyStreak', { n: st.streak.count })) : ''}</small></div><span class="bar-spacer"></span></header>
+      <div class="daily">
+        <div class="daily-preview">${miniBoard(def.board, 'big')}</div>
+        <p class="mono">${esc(t('par'))} ${def.par} · ${esc(A.play.tacticName(def.depth === 1 ? 'bariz' : def.depth === 2 ? 'hazirlik' : def.feda ? 'feda' : 'kombinasyon'))}</p>
+        ${gate ? `<p class="note">${esc(t('dailyGate'))}</p><button class="btn primary big" id="daily-gate">${esc(t('dailyGateGo'))}</button>` :
+        res ? `<div class="daily-res"><p>${esc(t('dailyDone'))}</p><p class="big-stars">${starsHtml(res.stars)}</p><p class="mono">${esc(t('movesOf', { m: res.moves, p: res.par }))} · ${A.play.fmtTime(res.time)}</p>
+               <button class="btn primary" id="daily-share">${icon('copy')} ${esc(t('dailyShare'))}</button><button class="btn" id="daily-again">${esc(t('dailyPlayAgain'))}</button><p class="note">${esc(t('dailyTomorrow'))}</p></div>` :
+        `<p class="note">${esc(t('firstDailyHint'))}</p><button class="btn primary big" id="daily-play">${esc(t('start'))}</button>`}
+      </div>`;
+    $('#daily-back').onclick = () => show('home');
+    const g = $('#daily-gate'); if (g) g.onclick = () => A.play.startLevel(1);
+    const pl = $('#daily-play'); if (pl) pl.onclick = () => A.play.startDaily(day);
+    const ag = $('#daily-again'); if (ag) ag.onclick = () => A.play.startDaily(day, true);
+    const sh = $('#daily-share'); if (sh) sh.onclick = () => shareDaily(day, res);
+  }
+  function shareLine(day, res) { return t('dailyShareLine', { name: 'Asris', n: day + 1, m: res.moves, p: res.par, t: A.play.fmtTime(res.time), stars: starsText(res.stars) }); }
+  async function shareDaily(day, res) {
+    const text = shareLine(day, res) + '\n' + location.href.split('#')[0];
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { /* paylaşım iptal ya da desteklenmiyor */ }
+    try { await navigator.clipboard.writeText(text); toast(t('dailyCopied')); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast(t('dailyCopied')); } catch (e2) { /* geç */ } ta.remove(); }
+  }
+  function dailyResult(day, res, moves, par, elapsed) {
+    const stars = moves <= par ? 3 : moves <= par + 2 ? 2 : 1, st = A.store.get();
+    const p = openModal(`<div class="lab-head"><div class="lab-stars">${starsHtml(stars)}</div><h2>${esc(t('dailyDone'))}</h2><p class="mono">${esc(t('movesOf', { m: moves, p: par }))} · ${A.play.fmtTime(elapsed)}</p>${st.streak.count > 1 ? `<p class="note">${esc(t('dailyStreak', { n: st.streak.count }))}</p>` : ''}</div>
+      <div class="modal-actions"><button class="btn" id="m-home">${esc(t('back'))}</button><button class="btn" id="m-retry">${esc(t('retry'))}</button><button class="btn primary" id="m-share">${icon('copy')} ${esc(t('dailyShare'))}</button></div>`, { cls: 'lab' });
+    bind('#m-home', 'home'); bind('#m-retry', 'retry'); $('#m-share').onclick = () => shareDaily(day, res || { moves, par, time: elapsed, stars });
+    const stEl = document.querySelectorAll('.lab-stars .star.on'); stEl.forEach((s, i) => { s.classList.remove('on'); setTimeout(() => { s.classList.add('on', 'pop'); A.audio.play('star', i); }, 250 + i * 220); });
+    return p;
+  }
+  // ---- ayarlar ----
+  function renderSettings() {
+    const el = $('#screen-settings'), st = A.store.get();
+    const opt = (name, val, label, cur) => `<button class="seg ${cur === val ? 'on' : ''}" data-set="${name}" data-val="${val}" aria-pressed="${cur === val}">${esc(label)}</button>`;
+    el.innerHTML = `<header class="bar"><button class="icon-btn" id="set-back" aria-label="${esc(t('back'))}">${icon('back')}</button><div class="bar-title"><b>${esc(t('settings'))}</b></div><span class="bar-spacer"></span></header>
+    <div class="settings">
+      <div class="set-row"><label>${esc(t('settingsLang'))}</label><div class="segs">${opt('lang', 'tr', t('lang_tr'), st.lang)}${opt('lang', 'en', t('lang_en'), st.lang)}</div></div>
+      <div class="set-row"><label>${esc(t('settingsView'))}</label><div class="segs">${opt('view', 'dots', t('viewDots'), st.unlockedView ? st.view : 'dots')}${opt('view', 'numbers', t('viewNumbers'), st.unlockedView ? st.view : '')}${opt('view', 'matrix', t('viewMatrix'), st.unlockedView ? st.view : '')}</div></div>
+      <div class="set-row"><label>${esc(t('settingsNotation'))}<small>${esc(t('settingsNotationNote'))}</small></label><div class="segs">${opt('notation', '0', t('off'), st.notation ? '1' : '0')}${opt('notation', '1', t('on'), st.notation ? '1' : '0')}</div></div>
+      <div class="set-row"><label>${esc(t('settingsSound'))}</label><div class="segs">${opt('sound', '0', t('off'), st.sound ? '1' : '0')}${opt('sound', '1', t('on'), st.sound ? '1' : '0')}</div></div>
+      <div class="set-row"><label>${esc(t('settingsTheme'))}</label><div class="segs">${opt('theme', 'auto', t('themeAuto'), st.theme)}${opt('theme', 'dark', t('themeDark'), st.theme)}${opt('theme', 'light', t('themeLight'), st.theme)}</div></div>
+      <div class="set-row"><label>${esc(A.pwa.isMobile() ? t('settingsInstall') : t('settingsInstallDesktop'))}<small>${esc(t('installBody'))}</small></label><button class="btn" id="set-install">${esc(A.pwa.installed() ? t('installed') : (A.pwa.isMobile() ? t('settingsInstall') : t('settingsInstallDesktop')))}</button></div>
+      <div class="set-row"><label>${esc(t('progressTitle'))}<small>${esc(t('progressBody'))}</small></label><div class="segs"><button class="btn" id="set-export">${esc(t('progressCopy'))}</button><button class="btn" id="set-import">${esc(t('progressPaste'))}</button></div><textarea id="set-code" class="code" rows="3" hidden placeholder="ASRIS1.…"></textarea><div id="set-import-actions" hidden><button class="btn primary" id="set-import-go">${esc(t('progressImport'))}</button></div></div>
+      <div class="set-row"><label>${esc(t('progressReset'))}</label><button class="btn danger" id="set-reset">${esc(t('progressReset'))}</button></div>
+      <p class="about">${esc(t('about'))}<br><small>${esc(t('version'))} ${A.config.version}</small></p>
+    </div>`;
+    $('#set-back').onclick = () => show('home');
+    el.querySelectorAll('.seg').forEach(b => b.onclick = () => {
+      const k = b.dataset.set, v = b.dataset.val;
+      A.store.set(s => { if (k === 'lang') s.lang = v; if (k === 'view') { s.view = v; s.unlockedView = true; } if (k === 'notation') s.notation = v === '1'; if (k === 'sound') s.sound = v === '1'; if (k === 'theme') s.theme = v; });
+      A.main.applySettings(); renderSettings(); A.audio.play('tap');
+    });
+    $('#set-install').onclick = () => A.pwa.offer(true);
+    $('#set-export').onclick = async () => { const code = A.store.exportCode(); const ta = $('#set-code'); ta.hidden = false; ta.value = code; $('#set-import-actions').hidden = true; try { await navigator.clipboard.writeText(code); toast(t('dailyCopied')); } catch (e) { ta.select(); } };
+    $('#set-import').onclick = () => { const ta = $('#set-code'); ta.hidden = false; ta.value = ''; ta.placeholder = 'ASRIS1.…'; $('#set-import-actions').hidden = false; ta.focus(); };
+    $('#set-import-go').onclick = () => { const ok = A.store.importCode($('#set-code').value); toast(t(ok ? 'progressImported' : 'progressBad')); if (ok) { A.main.applySettings(); renderSettings(); } };
+    $('#set-reset').onclick = async () => { if (await confirm(t('progressResetConfirm'), t('yesReset'), t('cancel'))) { A.store.resetAll(); A.main.applySettings(); show('home'); } };
+  }
+  // ---- dil seçimi (ilk açılış) ----
+  function langPicker() {
+    const p = openModal(`<h2>${esc(t('chooseLang'))}</h2><div class="modal-actions center"><button class="btn primary big" id="l-tr">Türkçe</button><button class="btn primary big" id="l-en">English</button></div>`, { cls: 'wide nolose' });
+    bind('#l-tr', 'tr'); bind('#l-en', 'en'); return p;
+  }
+  // ---- toast ----
+  let toastT = null;
+  function toast(msg, ms) { const el = $('#toast'); el.textContent = msg; el.hidden = false; el.classList.add('show'); if (toastT) clearTimeout(toastT); toastT = setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 300); }, ms || 2600); }
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('#modal').hidden && !$('#modal .nolose')) closeModal(null); });
+  $('#modal').addEventListener('click', ev => { if (ev.target.classList.contains('modal-back') && !$('#modal .nolose')) closeModal(null); });
+  A.ui = { show, current: () => current, buildPlay, card, confirm, viewChoice, inverseCard, labCard, help, dailyResult, langPicker, toast, miniBoard, closeModal, renderHome };
+})(window.Asris = window.Asris || {});
+
+/* Asris — ana ekrana / masaüstüne ekleme ve çevrimdışı önbellek */
+(function (A) {
+  'use strict';
+  const t = k => A.i18n.t(k);
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); deferred = ev; });
+  window.addEventListener('appinstalled', () => { deferred = null; A.ui.toast(t('installed')); });
+  const ua = navigator.userAgent || '';
+  const isIOS = () => /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isMobile = () => isIOS() || /Android/i.test(ua);
+  const installed = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  async function offer(explicit) {
+    if (installed()) { if (explicit) A.ui.toast(t('installed')); return; }
+    if (deferred) {
+      try { deferred.prompt(); const r = await deferred.userChoice; if (r && r.outcome === 'accepted') deferred = null; return; } catch (e) { /* devam */ }
+    }
+    const body = isIOS() ? t('installIos') : isMobile() ? t('installDesktopHelp') : t('installDesktopHelp');
+    const inFrame = window.top !== window.self;
+    await A.ui.card({ title: isMobile() ? t('settingsInstall') : t('settingsInstallDesktop'), body: t('installBody') + '\n\n' + (inFrame ? t('installUnavailable') : body), primary: t('ok') });
+  }
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    if (!/^https?:$/.test(location.protocol) || window.top !== window.self) return;
+    if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* çevrimdışı desteği isteğe bağlı */ }); });
+  }
+  A.pwa = { offer, isMobile, isIOS, installed, registerSW };
+})(window.Asris = window.Asris || {});
+
+/* Asris — açılış, ayarlar, klavye, tema */
+(function (A) {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  function applySettings() {
+    const st = A.store.get();
+    A.i18n.setLang(st.lang || 'tr');
+    A.audio.setEnabled(st.sound !== false);
+    const app = $('#app'); app.dataset.theme = st.theme === 'auto' ? '' : st.theme;
+    if (!st.theme || st.theme === 'auto') app.removeAttribute('data-theme');
+    A.ui.buildPlay(); A.play.remount();
+  }
+  // klavye: Ctrl+Z, R, H, 1-3 + − S F
+  let kbSrc = null, kbDst = null;
+  function kbClear() { kbSrc = kbDst = null; const b = A.play.board; if (b) b.clearHints(); }
+  document.addEventListener('keydown', ev => {
+    if (A.ui.current() !== 'play' || !$('#modal').hidden) return;
+    const tag = (ev.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'textarea') return;
+    const s = A.play.current(); if (!s || s.finished) return;
+    const b = A.play.board, n = b.board.length, k = ev.key;
+    if ((ev.ctrlKey || ev.metaKey) && k.toLowerCase() === 'z') { ev.preventDefault(); A.play.undo(); kbClear(); return; }
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (k === 'r' || k === 'R') { A.play.reset(); kbClear(); return; }
+    if (k === 'h' || k === 'H') { A.play.hint(); kbClear(); return; }
+    if (k === 'Escape') { kbClear(); return; }
+    if (/^[1-9]$/.test(k)) { const i = +k - 1; if (i >= n) return; if (kbSrc === null || i === kbSrc) { kbSrc = i; kbDst = null; b.hintRow(i); A.ui.toast(A.i18n.t('keyboardPick', { a: i + 1, n }), 1800); } else { kbDst = i; b.hintMove({ t: 'add', i: kbSrc, j: kbDst }); A.ui.toast(A.i18n.t('keyboardOp', { a: kbSrc + 1, b: kbDst + 1 }), 1800); } return; }
+    if (kbSrc === null) return;
+    if (k === 'f' || k === 'F') { A.play.makeMove({ t: 'neg', i: kbSrc, j: kbSrc }); kbClear(); return; }
+    if (kbDst === null) return;
+    if (k === '+' || k === '=') { A.play.makeMove({ t: 'add', i: kbSrc, j: kbDst }); kbClear(); }
+    else if (k === '-' || k === '_') { A.play.makeMove({ t: 'sub', i: kbSrc, j: kbDst }); kbClear(); }
+    else if (k === 's' || k === 'S') { A.play.makeMove({ t: 'swap', i: Math.min(kbSrc, kbDst), j: Math.max(kbSrc, kbDst) }); kbClear(); }
+  });
+  document.addEventListener('pointerdown', () => A.audio.unlock(), { once: true, capture: true });
+  async function boot() {
+    const st = A.store.get();
+    if (!st.lang) {
+      const nav = (navigator.language || 'tr').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+      A.i18n.setLang(nav); A.ui.buildPlay();
+      const l = await A.ui.langPicker(); A.store.set(s => { s.lang = l || nav; });
+    }
+    applySettings();
+    A.ui.show('home');
+    A.pwa.registerSW();
+    // mesafe tablosunu boşta önceden getir (ipucu için)
+    const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
+    idle(() => { if (A.store.highestDone() >= 2) A.dist.load(); });
+  }
+  A.main = { applySettings, boot };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})(window.Asris = window.Asris || {});
+
+</script>
+</body>
+</html>
